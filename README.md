@@ -4,6 +4,7 @@ Easily download and share videos from your favorite social media platforms with 
 
 🎥 **Save videos from multiple platforms in a snap!**
 🚀 **Simple, fast, and user-friendly!**
+💯 **Updated documentation 2025!**
 
 ## Features
 
