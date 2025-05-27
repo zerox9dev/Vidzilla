@@ -16,20 +16,21 @@ Easily download and share videos from your favorite social media platforms with 
 
 ## Supported Platforms
 
-| Platform  | Status |
-| --------- | ------ |
-| Instagram | ✅     |
-| TikTok    | ✅     |
-| YouTube   | ✅     |
-| Facebook  | ✅     |
-| Twitter   | ✅     |
-| Pinterest | ✅     |
+| Platform  | Status | Implementation Method |
+| --------- | ------ | --------------------- |
+| Instagram | ✅     | Instaloader library   |
+| TikTok    | ✅     | RapidAPI             |
+| YouTube   | ✅     | RapidAPI             |
+| Facebook  | ✅     | RapidAPI             |
+| Twitter   | ✅     | RapidAPI             |
+| Pinterest | ✅     | RapidAPI             |
 
 ## Commands
 
 - `/start` - Begin interaction with the bot and receive usage instructions
 - `/help` - Get detailed information about the bot's functionality
 - `/subscribe` - View and select subscription plans
+- `/activate_coupon` - Activate a coupon code for premium access
 
 ### Admin Commands
 
@@ -38,9 +39,9 @@ Easily download and share videos from your favorite social media platforms with 
 
 ## Subscription Plans
 
-- 1 month subscription
-- 3 months subscription
-- Lifetime subscription
+- 1 month subscription - $1
+- 3 months subscription - $5
+- Lifetime subscription - $10
 
 ## Installation and Setup
 
@@ -51,37 +52,96 @@ Easily download and share videos from your favorite social media platforms with 
    cd social-media-video-downloader-bot
    ```
 
-2. Install the required dependencies:
+2. Create a virtual environment and install the required dependencies:
 
    ```
+   python -m venv .myebv
+   source .myebv/bin/activate  # On Windows: .myebv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the project root and add the following environment variables:
+3. Create a `.env` file in the project root (you can copy from `.env.example`):
 
-- `BOT_TOKEN`: Your Telegram bot token obtained from BotFather
-- `BOT_USERNAME`: Your Telegram bot's username (without @)
-- `RAPIDAPI_KEY`: Your RapidAPI key for the Social Media Video Downloader API
-- `WEBHOOK_PATH`: The path for your webhook (e.g., `/webhook`)
-- `WEBHOOK_URL`: The full URL to your webhook (e.g., `https://your-domain.com/webhook`)
-- `MONGODB_URI`: Your MongoDB connection string
-- `MONGODB_DB_NAME`: Name of your MongoDB database
-- `MONGODB_USERS_COLLECTION`: Name of the collection for user data
-- `MONGODB_COUPONS_COLLECTION`: Name of the collection for coupon data
-- `ADMIN_IDS`: Comma-separated list of admin user IDs
-- `FREE_LIMIT`: Number of free downloads allowed per user (default is 3)
-- `STRIPE_SECRET_KEY`: Your Stripe secret key
-- `STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
-- `STRIPE_WEBHOOK_SECRET`: Your Stripe webhook secret
-- `STRIPE_SUCCESS_URL`: URL to redirect after successful payment (default is https://t.me/your_bot_username)
-- `STRIPE_CANCEL_URL`: URL to redirect after cancelled payment (default is https://t.me/your_bot_username)
+   ```
+   # Existing variables
+   BOT_TOKEN=your_telegram_bot_token
+   RAPIDAPI_KEY=your_rapidapi_key
+   WEBHOOK_PATH='/webhook'
+   WEBHOOK_URL=your_webhook_url
 
-4. Set up a webhook for your bot on a server with HTTPS support.
+   # MongoDB configuration
+   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_DB_NAME=your_db_name
+   MONGODB_USERS_COLLECTION=users
+   MONGODB_COUPONS_COLLECTION=coupons
+
+   # User management configuration
+   ADMIN_IDS=your_admin_telegram_id
+   FREE_LIMIT=3
+
+   # Stripe configuration
+   STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   BOT_USERNAME=your_bot_username
+   STRIPE_SUCCESS_URL=your_success_url
+   STRIPE_CANCEL_URL=your_cancel_url
+   ```
+
+4. Set up the temporary directory for downloaded videos:
+
+   ```
+   mkdir temp_videos
+   ```
 
 5. Run the bot:
    ```
    python bot.py
    ```
+
+## Webhook Setup
+
+For production, you need to set up a webhook. The bot supports ngrok for development:
+
+1. Install ngrok and start it with:
+   ```
+   ngrok http 8000
+   ```
+
+2. Copy the ngrok URL and set it as your `WEBHOOK_URL` in the `.env` file.
+
+## Dependencies
+
+The project uses the following main dependencies:
+
+- `aiogram` - Modern and fully asynchronous framework for Telegram Bot API
+- `aiohttp` - Asynchronous HTTP client/server framework
+- `python-dotenv` - Environment variable management
+- `pymongo` - MongoDB driver
+- `requests` - HTTP requests library
+- `instaloader` - Library for downloading content from Instagram
+- `stripe` - Stripe API client for payments
+- `asyncio` - Asynchronous I/O library
+
+## API Usage
+
+This bot uses two main methods for downloading content:
+
+1. **Instagram**: Uses the Instaloader library for downloading Instagram Reels and Posts
+2. **Other platforms**: Uses the "auto-download-all-in-one" API from RapidAPI to fetch videos from TikTok, YouTube, Facebook, Twitter, and Pinterest
+
+## Technical Notes
+
+- The bot might show a "403 Forbidden" error when accessing Instagram's GraphQL API. This is normal behavior as Instagram restricts automated access, but the Instaloader library has fallback methods that still allow successful downloads in most cases.
+- For other platforms, the API might have rate limits depending on your RapidAPI subscription plan.
+- Make sure your MongoDB server is running and accessible before starting the bot.
+
+## User Experience
+
+1. Users start with a limited number of free downloads (default: 3)
+2. After reaching the limit, they need to subscribe or use a coupon
+3. Videos are sent both as a playable video message and as a downloadable file
+4. For Instagram posts that contain images instead of videos, the images are sent as photos
 
 ## Stripe Integration
 
@@ -92,72 +152,13 @@ To set up Stripe for production payments:
 1. Create a Stripe account at https://stripe.com if you haven't already.
 2. In the Stripe Dashboard, navigate to the API keys section.
 3. Copy your live secret key and publishable key.
-4. Update your `.env` file with these live keys:
-   ```
-   STRIPE_SECRET_KEY=your_live_secret_key
-   STRIPE_PUBLISHABLE_KEY=your_live_publishable_key
-   ```
-5. Set up a webhook in the Stripe Dashboard:
-   - Go to Developers > Webhooks
-   - Add a new endpoint with your production URL
-   - Select the events you want to listen for (at minimum, `checkout.session.completed`)
-   - Copy the webhook signing secret and add it to your `.env` file:
-     ```
-     STRIPE_WEBHOOK_SECRET=your_webhook_signing_secret
-     ```
-6. To enable PayPal:
-   - In the Stripe Dashboard, go to Settings > Payment methods
-   - Find PayPal in the list and click 'Set up'
-   - Follow the instructions to connect your PayPal account
-7. Update the success and cancel URLs in `config.py` to point to your production bot's URL.
-8. Test the integration thoroughly in Stripe's test mode before switching to live mode.
-
-Remember to keep your Stripe API keys and webhook secret secure and never expose them publicly.
-
-## Usage
-
-1. Start a chat with the bot on Telegram
-2. Send the `/start` command to get instructions
-3. Send a link to a video from any supported platform
-4. The bot will process the link and send you the video as both a video message and a file
-5. Use `/subscribe` to view and purchase subscription plans
-
-### Premium Access
-
-Users have a limited number of free downloads. To get unlimited access:
-
-1. Use the `/subscribe` command to view available plans
-2. Select a plan to proceed to payment
-3. Complete the payment process through Stripe
-4. Once payment is confirmed, the subscription will be automatically activated
-
-## Admin Functionality
-
-Admins can perform the following actions:
-
-- Generate coupon codes for premium access using `/generate_coupon`
-- View usage statistics including total users, active subscriptions, total downloads, and unused coupons using `/stats`
-
-## Dependencies
-
-- aiogram
-- aiohttp
-- python-dotenv
-- pymongo
-- requests
-- stripe
-
-## API Used
-
-This bot uses the Social Media Video Downloader API from RapidAPI to fetch video links from various platforms.
+4. Update your `.env` file with these live keys.
+5. Set up a webhook in the Stripe Dashboard pointing to your webhook URL.
+6. To enable PayPal, connect your PayPal account in the Stripe Dashboard.
 
 ## Note
 
 Ensure you comply with the terms of service of all supported platforms when using this bot.
-
-## Contributing
-
-We welcome contributions! Please read our [contributing guidelines](CONTRIBUTING.md) for details on how to get started.
 
 ## License
 

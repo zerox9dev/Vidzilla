@@ -3,8 +3,9 @@ import os
 import shutil
 import tempfile
 import uuid
+import glob
 
-import ddinsta
+import instaloader
 from aiogram.types import FSInputFile
 
 from config import BASE_DIR, TEMP_DIRECTORY
@@ -26,33 +27,66 @@ async def process_instagram(message, bot, instagram_url):
         # Create a unique temporary directory for this request
         os.makedirs(temp_dir, exist_ok=True)
 
-        if "/reel/" in instagram_url:
+        if "/reel/" in instagram_url or "/p/" in instagram_url:
             try:
                 logger.info(f"""Attempting to download video from: {
                             instagram_url}""")
-                result = ddinsta.save_video(instagram_url)
-                logger.info(f"""ddinsta.save_video result: {result}""")
-
-                if result == '[!] Success':
-                    # Find the video file in the root directory
-                    video_files = [f for f in os.listdir(
-                        BASE_DIR) if f.endswith('.mp4')]
-                    if not video_files:
-                        raise FileNotFoundError(
-                            "Video file not found in root directory")
-
-                    original_video_path = os.path.join(
-                        BASE_DIR, video_files[-1])
-                elif os.path.exists(result):
-                    original_video_path = result
-                else:
-                    raise FileNotFoundError(f"Video file not found: {result}")
-
-                # Move the file to our temp directory
-                video_path = os.path.join(temp_dir, f"video_{request_id}.mp4")
-                shutil.move(original_video_path, video_path)
-                logger.info(f"Moved video to: {video_path}")
-
+                
+                # Initialize Instaloader
+                L = instaloader.Instaloader(dirname_pattern=temp_dir, 
+                                           download_pictures=True,
+                                           download_videos=True, 
+                                           download_video_thumbnails=False,
+                                           download_geotags=False, 
+                                           download_comments=False,
+                                           save_metadata=False)
+                
+                # Extract shortcode from URL
+                if "/reel/" in instagram_url:
+                    shortcode = instagram_url.split("/reel/")[1].split("/")[0].split("?")[0]
+                else:  # "/p/" in instagram_url
+                    shortcode = instagram_url.split("/p/")[1].split("/")[0].split("?")[0]
+                
+                logger.info(f"Extracted shortcode: {shortcode}")
+                
+                # Download post by shortcode
+                post = instaloader.Post.from_shortcode(L.context, shortcode)
+                L.download_post(post, target=request_id)
+                
+                # Find the downloaded files using glob pattern
+                video_files = glob.glob(os.path.join(temp_dir, "**/*.mp4"), recursive=True)
+                
+                if not video_files:
+                    # Check if it's an image post
+                    image_files = glob.glob(os.path.join(temp_dir, "**/*.jpg"), recursive=True)
+                    # Filter out profile pictures
+                    image_files = [f for f in image_files if "_profile_pic.jpg" not in f]
+                    
+                    if image_files:
+                        image_path = image_files[0]
+                        logger.info(f"Found image file: {image_path}")
+                        
+                        # Send as photo
+                        photo_file = FSInputFile(image_path)
+                        await bot.send_photo(chat_id=message.chat.id, photo=photo_file)
+                        
+                        # Send as document
+                        file_name = f"instagram_photo_{message.from_user.id}.jpg"
+                        doc_file = FSInputFile(image_path, filename=file_name)
+                        await bot.send_document(
+                            chat_id=message.chat.id,
+                            document=doc_file,
+                            disable_content_type_detection=True
+                        )
+                        
+                        logger.info("Image successfully sent")
+                        return
+                    else:
+                        raise FileNotFoundError("No media files found in downloaded content")
+                
+                video_path = video_files[0]
+                logger.info(f"Found video file: {video_path}")
+                
                 if os.path.getsize(video_path) == 0:
                     raise ValueError("Downloaded video file is empty")
 
@@ -79,7 +113,7 @@ async def process_instagram(message, bot, instagram_url):
                 await bot.send_message(message.chat.id, f"Error downloading video: {str(e)}")
         else:
             logger.warning(f"Invalid Instagram URL received: {instagram_url}")
-            await bot.send_message(message.chat.id, "Invalid Instagram URL. Please provide a link to a reel.")
+            await bot.send_message(message.chat.id, "Invalid Instagram URL. Please provide a link to a post or reel.")
 
     except Exception as e:
         logger.error(f"Error processing Instagram video: {str(e)}")
