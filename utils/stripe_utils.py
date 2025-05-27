@@ -15,7 +15,7 @@ def create_checkout_session(plan, user_id):
         raise ValueError("Invalid subscription plan")
 
     session = stripe.checkout.Session.create(
-        payment_method_types=['card', 'paypal'],
+        payment_method_types=['card'],
         line_items=[{
             'price_data': {
                 'currency': 'usd',
