@@ -38,9 +38,10 @@ def get_user(user_id):
     return users_collection.find_one({'user_id': user_id})
 
 
-def create_user(user_id):
+def create_user(user_id, username=None):
     user = {
         'user_id': user_id,
+        'username': username,
         'downloads_count': 0,
         'subscription_end': None
     }
@@ -55,8 +56,8 @@ def increment_downloads(user_id):
     )
 
 
-def check_user_limit(user_id):
-    user = get_user(user_id) or create_user(user_id)
+def check_user_limit(user_id, username=None):
+    user = get_user(user_id) or create_user(user_id, username)
 
     if user['subscription_end'] and user['subscription_end'] > datetime.now():
         return True
@@ -135,6 +136,7 @@ def is_admin(user_id):
 
 def get_usage_stats():
     total_users = users_collection.count_documents({})
+    users_with_username = users_collection.count_documents({'username': {'$ne': None}})
     active_subscriptions = users_collection.count_documents(
         {'subscription_end': {'$gt': datetime.now()}})
     total_downloads = sum(user['downloads_count']
@@ -143,10 +145,18 @@ def get_usage_stats():
 
     return {
         'total_users': total_users,
+        'users_with_username': users_with_username,
         'active_subscriptions': active_subscriptions,
         'total_downloads': total_downloads,
         'unused_coupons': unused_coupons
     }
+
+
+def get_users_with_usernames():
+    return list(users_collection.find(
+        {'username': {'$ne': None}}, 
+        {'user_id': 1, 'username': 1, 'downloads_count': 1, 'subscription_end': 1}
+    ))
 
 
 async def handle_coupon_activation(message):

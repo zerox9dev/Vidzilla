@@ -14,6 +14,7 @@ from utils.user_management import (
     get_limit_exceeded_message,
     get_usage_stats,
     is_admin,
+    get_users_with_usernames,
 )
 
 
@@ -68,14 +69,18 @@ Commands:
 
 Admin commands:
 /generate_coupon - Generate a new coupon
-/stats - View usage statistics"""
+/stats - View usage statistics
+/list_users - List users with usernames"""
 
     await message.answer(help_text)
 
 
 async def process_link(message: Message, state: FSMContext, bot: Bot):
     url = message.text
-    if not check_user_limit(message.from_user.id):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    
+    if not check_user_limit(user_id, username):
         await message.answer(get_limit_exceeded_message())
         return
 
@@ -163,6 +168,7 @@ async def stats_command(message: Message):
     stats_message = (
         f"Usage Statistics:\n\n"
         f"Total Users: {stats['total_users']}\n"
+        f"Users With Username: {stats['users_with_username']}\n"
         f"Active Subscriptions: {stats['active_subscriptions']}\n"
         f"Total Downloads: {stats['total_downloads']}\n"
         f"Unused Coupons: {stats['unused_coupons']}"
@@ -187,6 +193,23 @@ async def handle_coupon_activation(message: Message, state: FSMContext):
     await state.set_state(DownloadVideo.waiting_for_link)
 
 
+async def list_users_command(message: Message):
+    if not is_admin(message.from_user.id):
+        await message.answer("This command is only available for admins.")
+        return
+
+    users = get_users_with_usernames()
+    if not users:
+        await message.answer("No users with usernames found.")
+        return
+
+    # Limit to first 20 users to avoid message too long errors
+    users = users[:20]
+    user_list = "\n".join([f"ID: {user['user_id']}, Username: @{user['username']}, Downloads: {user['downloads_count']}" for user in users])
+    
+    await message.answer(f"Users with usernames (showing first {len(users)}):\n\n{user_list}")
+
+
 def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
     dp.message.register(send_help, Command(commands=['help']))
@@ -201,3 +224,4 @@ def register_handlers(dp):
         handle_coupon_generation, AdminActions.waiting_for_coupon_duration)
     dp.message.register(handle_coupon_activation,
                         AdminActions.waiting_for_coupon)
+    dp.message.register(list_users_command, Command(commands=['list_users']))
