@@ -110,14 +110,32 @@ async def process_instagram(message, bot, instagram_url):
             except Exception as e:
                 logger.error(
                     f"Error downloading or processing video: {str(e)}")
-                await bot.send_message(message.chat.id, f"Error downloading video: {str(e)}")
+                
+                # Check if this is an Instagram rate limiting error (401 Unauthorized)
+                error_message = str(e)
+                if "401 Unauthorized" in error_message and "Please wait a few minutes before you try again" in error_message:
+                    await bot.send_message(
+                        message.chat.id, 
+                        "Instagram's servers are currently busy. Please try again in a few minutes."
+                    )
+                else:
+                    await bot.send_message(message.chat.id, f"Error downloading video: {str(e)}")
         else:
             logger.warning(f"Invalid Instagram URL received: {instagram_url}")
             await bot.send_message(message.chat.id, "Invalid Instagram URL. Please provide a link to a post or reel.")
 
     except Exception as e:
         logger.error(f"Error processing Instagram video: {str(e)}")
-        await bot.send_message(message.chat.id, f"Error processing Instagram video: {str(e)}")
+        
+        # Check if this is an Instagram rate limiting error (401 Unauthorized)
+        error_message = str(e)
+        if "401 Unauthorized" in error_message and "Please wait a few minutes before you try again" in error_message:
+            await bot.send_message(
+                message.chat.id, 
+                "Instagram's servers are currently busy. Please try again in a few minutes."
+            )
+        else:
+            await bot.send_message(message.chat.id, f"Error processing Instagram video: {str(e)}")
     finally:
         # Clean up the temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)
