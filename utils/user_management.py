@@ -159,6 +159,40 @@ def get_users_with_usernames():
     ))
 
 
+def get_all_users():
+    """Get all user IDs from the database."""
+    return list(users_collection.find({}, {'user_id': 1}))
+
+
+async def broadcast_message_to_all_users(bot, message_text):
+    """Send a broadcast message to all users.
+    
+    Args:
+        bot: The bot instance to use for sending messages
+        message_text: The message text to send to all users
+        
+    Returns:
+        tuple: (success_count, failed_count)
+    """
+    all_users = get_all_users()
+    success_count = 0
+    failed_count = 0
+    
+    for user in all_users:
+        try:
+            await bot.send_message(
+                chat_id=user['user_id'],
+                text=message_text,
+                parse_mode="HTML"
+            )
+            success_count += 1
+        except Exception as e:
+            failed_count += 1
+            logger.error(f"Failed to send message to user {user['user_id']}: {str(e)}")
+    
+    return success_count, failed_count
+
+
 async def handle_coupon_activation(message):
     coupon_code = message.text.strip()
     if activate_coupon(message.from_user.id, coupon_code):

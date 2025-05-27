@@ -15,6 +15,8 @@ from utils.user_management import (
     get_usage_stats,
     is_admin,
     get_users_with_usernames,
+    users_collection,
+    broadcast_message_to_all_users,
 )
 
 
@@ -25,6 +27,7 @@ class DownloadVideo(StatesGroup):
 class AdminActions(StatesGroup):
     waiting_for_coupon_duration = State()
     waiting_for_coupon = State()
+    waiting_for_broadcast_message = State()
 
 
 async def send_welcome(message: Message, state: FSMContext):
@@ -70,7 +73,8 @@ Commands:
 Admin commands:
 /generate_coupon - Generate a new coupon
 /stats - View usage statistics
-/list_users - List users with usernames"""
+/list_users - List users with usernames
+/broadcast - Broadcast a message to all users"""
 
     await message.answer(help_text)
 
@@ -210,6 +214,28 @@ async def list_users_command(message: Message):
     await message.answer(f"Users with usernames (showing first {len(users)}):\n\n{user_list}")
 
 
+async def broadcast_command(message: Message, state: FSMContext):
+    """Command to send a notification to all users that the bot is working again."""
+    if not is_admin(message.from_user.id):
+        await message.answer("This command is only available for admins.")
+        return
+    
+    await message.answer("Please enter the message you want to broadcast to all users:")
+    await state.set_state(AdminActions.waiting_for_broadcast_message)
+
+
+async def handle_broadcast_message(message: Message, state: FSMContext, bot: Bot):
+    """Handle the broadcast message entered by the admin."""
+    broadcast_message = message.text
+    
+    await message.answer("Broadcasting message to all users. This may take some time...")
+    
+    success_count, failed_count = await broadcast_message_to_all_users(bot, broadcast_message)
+    
+    await message.answer(f"Broadcast completed.\nSuccess: {success_count}\nFailed: {failed_count}")
+    await state.set_state(DownloadVideo.waiting_for_link)
+
+
 def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
     dp.message.register(send_help, Command(commands=['help']))
@@ -219,9 +245,12 @@ def register_handlers(dp):
     dp.message.register(stats_command, Command(commands=['stats']))
     dp.message.register(activate_coupon_command,
                         Command(commands=['activate_coupon']))
+    dp.message.register(broadcast_command, Command(commands=['broadcast']))
     dp.message.register(process_link, DownloadVideo.waiting_for_link)
     dp.callback_query.register(
         handle_coupon_generation, AdminActions.waiting_for_coupon_duration)
     dp.message.register(handle_coupon_activation,
                         AdminActions.waiting_for_coupon)
+    dp.message.register(handle_broadcast_message,
+                        AdminActions.waiting_for_broadcast_message)
     dp.message.register(list_users_command, Command(commands=['list_users']))
