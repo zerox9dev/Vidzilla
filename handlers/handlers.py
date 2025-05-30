@@ -32,18 +32,19 @@ class AdminActions(StatesGroup):
 
 async def send_welcome(message: Message, state: FSMContext):
     await message.answer(
-        f"""<b>👋 Hi! Welcome to the Social Media Video Downloader Bot!</b>
+        f"""<b>👋 Hi, Welcome!</b>
 
 I can download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
-<b>🔒 Subscription Required:</b> To use this bot, a monthly subscription of $1 is required. This small fee helps us maintain our servers and provide high-quality service.
+<b>🔒 Subscription Required:</b> To use this bot, a monthly subscription of $1 is required. This small fee helps us maintain our servers.
+
+To use the bot, simply send me a video link from any supported platform after subscribing.
 
 <b>Available commands:</b>
 /start - Start working with the bot
 /help - Get detailed help
 /subscribe - Subscribe to use the bot
 
-To use the bot, simply send me a video link from any supported platform after subscribing.
 """,
         parse_mode="HTML"
     )
@@ -64,15 +65,6 @@ Commands:
 /start - Start working with the bot
 /help - Show this help message
 /subscribe - Subscribe to use the bot"""
-
-    if is_admin(message.from_user.id):
-        help_text += """
-
-Admin commands:
-/generate_coupon - Generate a new coupon
-/stats - View usage statistics
-/list_users - List users with usernames
-/broadcast - Broadcast a message to all users"""
 
     await message.answer(help_text)
 
