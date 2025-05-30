@@ -42,22 +42,16 @@ async def handle_stripe_webhook(request):
             session.id, expand=['customer']
         )
         user_id = int(session_with_expand.client_reference_id)
-        plan = session_with_expand.metadata.get('plan')
+        plan = '1month'  # Always 1month plan
 
-        if user_id and plan:
+        if user_id:
             success = await update_subscription(user_id, plan)
             if success:
                 logger.info(f"Subscription activated for user {user_id}")
-                duration_map = {
-                    '1month': timedelta(days=30),
-                    '3months': timedelta(days=90),
-                    'lifetime': timedelta(days=36500)
-                }
-                end_date = datetime.now() + duration_map.get(plan, timedelta(days=30))
-                message = (f"Thank you for your purchase! Your subscription has been activated. """
-                           f"""Your subscription is valid until {
-                               end_date.strftime('%Y-%m-%d')}. """
-                           f"""You can now send me a link to download a video.""")
+                end_date = datetime.now() + timedelta(days=30)
+                message = (f"Thank you for your subscription! Your access has been activated. "
+                           f"Your subscription is valid until {end_date.strftime('%Y-%m-%d')}. "
+                           f"You can now send me a link to download a video.")
                 await send_message_to_user(bot, user_id, message)
             else:
                 logger.error(
@@ -65,7 +59,7 @@ async def handle_stripe_webhook(request):
                 message = "There was an error activating your subscription. Please contact support."
                 await send_message_to_user(bot, user_id, message)
         else:
-            logger.error(f"Missing user_id or plan in session {session.id}")
+            logger.error(f"Missing user_id in session {session.id}")
     elif event['type'] == 'checkout.session.expired':
         session = event['data']['object']
         user_id = int(session.client_reference_id)

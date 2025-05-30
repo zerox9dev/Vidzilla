@@ -8,7 +8,6 @@ from pymongo.errors import ConnectionFailure
 
 from config import (
     ADMIN_IDS,
-    FREE_LIMIT,
     MONGODB_COUPONS_COLLECTION,
     MONGODB_DB_NAME,
     MONGODB_URI,
@@ -56,13 +55,11 @@ def increment_downloads(user_id):
     )
 
 
-def check_user_limit(user_id, username=None):
+def check_user_subscription(user_id, username=None):
+    """Check if user has an active subscription"""
     user = get_user(user_id) or create_user(user_id, username)
 
     if user['subscription_end'] and user['subscription_end'] > datetime.now():
-        return True
-
-    if user['downloads_count'] < FREE_LIMIT:
         increment_downloads(user_id)
         return True
 
@@ -86,9 +83,7 @@ def activate_coupon(user_id, coupon_code):
         return False
 
     duration_map = {
-        '1month': timedelta(days=30),
-        '3months': timedelta(days=90),
-        'lifetime': timedelta(days=36500)  # ~100 years
+        '1month': timedelta(days=30)
     }
 
     duration = duration_map.get(coupon['duration'])
@@ -108,15 +103,13 @@ def activate_coupon(user_id, coupon_code):
     return True
 
 
-def get_limit_exceeded_message():
-    return f"You have exceeded the free limit of {FREE_LIMIT} downloads.\n\nPlease choose a subscription plan to continue using the bot:\n\n1. 1 month - $1\n2. 3 months - $5\n3. Lifetime - $10\n\nUse /subscribe command to select a plan."
+def get_subscription_required_message():
+    return "To use this bot, you need to subscribe for $1 per month. This small fee helps us maintain our servers and provide you with high-quality service.\n\nUse /subscribe command to get started."
 
 
 async def update_subscription(user_id, plan):
     duration_map = {
-        '1month': timedelta(days=30),
-        '3months': timedelta(days=90),
-        'lifetime': timedelta(days=36500)  # ~100 years
+        '1month': timedelta(days=30)
     }
 
     duration = duration_map.get(plan)

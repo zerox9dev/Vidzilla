@@ -12,7 +12,7 @@ stripe.api_key = STRIPE_SECRET_KEY
 
 def create_checkout_session(plan, user_id):
     if plan not in SUBSCRIPTION_PLANS:
-        raise ValueError("Invalid subscription plan")
+        plan = '1month'  # Default to 1month if invalid plan provided
 
     session = stripe.checkout.Session.create(
         payment_method_types=['card'],
@@ -21,6 +21,7 @@ def create_checkout_session(plan, user_id):
                 'currency': 'usd',
                 'product_data': {
                     'name': SUBSCRIPTION_PLANS[plan]['name'],
+                    'description': 'Monthly access to download videos from social media platforms',
                 },
                 'unit_amount': SUBSCRIPTION_PLANS[plan]['price'],
             },
@@ -30,7 +31,6 @@ def create_checkout_session(plan, user_id):
         success_url=STRIPE_SUCCESS_URL,
         cancel_url=STRIPE_CANCEL_URL,
         client_reference_id=str(user_id),
-        metadata={'plan': plan}
     )
     return session.url
 

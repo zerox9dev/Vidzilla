@@ -4,14 +4,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from config import ADMIN_IDS, FREE_LIMIT, SUBSCRIPTION_PLANS
+from config import ADMIN_IDS, SUBSCRIPTION_PLANS
 from handlers import facebook, instagram, pinterest, tiktok, twitter, youtube
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,
-    check_user_limit,
+    check_user_subscription,
     create_coupon,
-    get_limit_exceeded_message,
+    get_subscription_required_message,
     get_usage_stats,
     is_admin,
     get_users_with_usernames,
@@ -36,36 +36,34 @@ async def send_welcome(message: Message, state: FSMContext):
 
 I can download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
-<b>🎁 Free Trial:</b> You have {FREE_LIMIT} free downloads to try out the bot.
+<b>🔒 Subscription Required:</b> To use this bot, a monthly subscription of $1 is required. This small fee helps us maintain our servers and provide high-quality service.
 
 <b>Available commands:</b>
 /start - Start working with the bot
 /help - Get detailed help
-/subscribe - View subscription plans
+/subscribe - Subscribe to use the bot
 
-To use the bot, simply send me a video link from any supported platform.
-
-<b>💡 Tip:</b> If you need more than {FREE_LIMIT} downloads, check out our subscription plans with /subscribe command!""",
+To use the bot, simply send me a video link from any supported platform after subscribing.
+""",
         parse_mode="HTML"
     )
     await state.set_state(DownloadVideo.waiting_for_link)
 
 
 async def send_help(message: Message):
-    help_text = f"""This bot helps download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
+    help_text = """This bot helps download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
 How to use:
-1. Send the bot a link to a video.
-2. The bot will process the link and return the video in two formats:
+1. Subscribe to the bot for $1/month using the /subscribe command
+2. Send the bot a link to a video
+3. The bot will process the link and return the video in two formats:
  - As a video message
  - As a document file
-
-You have {FREE_LIMIT} free downloads. After that, you'll need to subscribe.
 
 Commands:
 /start - Start working with the bot
 /help - Show this help message
-/subscribe - View and purchase subscription plans"""
+/subscribe - Subscribe to use the bot"""
 
     if is_admin(message.from_user.id):
         help_text += """
@@ -84,8 +82,8 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     user_id = message.from_user.id
     username = message.from_user.username
     
-    if not check_user_limit(user_id, username):
-        await message.answer(get_limit_exceeded_message())
+    if not check_user_subscription(user_id, username):
+        await message.answer(get_subscription_required_message())
         return
 
     await message.answer("Processing your link...")
@@ -114,15 +112,15 @@ async def subscribe_command(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     keyboard = []
 
-    for plan, details in SUBSCRIPTION_PLANS.items():
-        price_in_dollars = details['price'] / 100  # Convert cents to dollars
-        button_text = f"{details['name']} - ${price_in_dollars:.2f}"
-        checkout_url = create_checkout_session(plan, user_id)
-        keyboard.append([types.InlineKeyboardButton(
-            text=button_text, url=checkout_url)])
+    plan = '1month'
+    details = SUBSCRIPTION_PLANS[plan]
+    price_in_dollars = details['price'] / 100  # Convert cents to dollars
+    button_text = f"{details['name']} - ${price_in_dollars:.2f}"
+    checkout_url = create_checkout_session(plan, user_id)
+    keyboard.append([types.InlineKeyboardButton(text=button_text, url=checkout_url)])
 
     reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-    await message.answer("Please choose a subscription plan:", reply_markup=reply_markup)
+    await message.answer("To use this bot, a subscription is required. This helps us maintain our servers and provide high-quality service:", reply_markup=reply_markup)
 
 
 async def generate_coupon_command(message: Message, state: FSMContext):
@@ -130,37 +128,10 @@ async def generate_coupon_command(message: Message, state: FSMContext):
         await message.answer("This command is only available for admins.")
         return
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="1 month", callback_data="coupon_1month")],
-        [InlineKeyboardButton(
-            text="3 months", callback_data="coupon_3months")],
-        [InlineKeyboardButton(
-            text="Lifetime", callback_data="coupon_lifetime")]
-    ])
-
-    await message.answer("Please choose the coupon duration:", reply_markup=keyboard)
-    await state.set_state(AdminActions.waiting_for_coupon_duration)
-
-
-async def handle_coupon_generation(callback_query: types.CallbackQuery, state: FSMContext):
-    duration_map = {
-        'coupon_1month': '1month',
-        'coupon_3months': '3months',
-        'coupon_lifetime': 'lifetime'
-    }
-    duration = duration_map.get(callback_query.data)
-
-    if not duration:
-        await callback_query.message.answer("Invalid duration. Please use the provided buttons.")
-        return
-
-    coupon_code = create_coupon(duration)
-
-    await callback_query.message.answer("Coupon generated successfully!")
-    await callback_query.message.answer(f"`{coupon_code}`", parse_mode="Markdown")
-
-    await callback_query.answer()
-    await state.clear()
+    # Only 1-month coupons are available now
+    coupon_code = create_coupon('1month')
+    await message.answer("Coupon generated successfully!")
+    await message.answer(f"`{coupon_code}`", parse_mode="Markdown")
 
 
 async def stats_command(message: Message):
@@ -190,7 +161,7 @@ async def handle_coupon_activation(message: Message, state: FSMContext):
     activation_result = activate_coupon(message.from_user.id, coupon_code)
 
     if activation_result:
-        await message.answer("Coupon successfully activated! You now have access to premium features.")
+        await message.answer("Coupon successfully activated! You now have access to the bot for one month.")
     else:
         await message.answer("Invalid or already used coupon code. Please try again or contact the admin.")
 
@@ -240,17 +211,11 @@ def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
     dp.message.register(send_help, Command(commands=['help']))
     dp.message.register(subscribe_command, Command(commands=['subscribe']))
-    dp.message.register(generate_coupon_command,
-                        Command(commands=['generate_coupon']))
+    dp.message.register(generate_coupon_command, Command(commands=['generate_coupon']))
     dp.message.register(stats_command, Command(commands=['stats']))
-    dp.message.register(activate_coupon_command,
-                        Command(commands=['activate_coupon']))
+    dp.message.register(activate_coupon_command, Command(commands=['activate_coupon']))
     dp.message.register(broadcast_command, Command(commands=['broadcast']))
     dp.message.register(process_link, DownloadVideo.waiting_for_link)
-    dp.callback_query.register(
-        handle_coupon_generation, AdminActions.waiting_for_coupon_duration)
-    dp.message.register(handle_coupon_activation,
-                        AdminActions.waiting_for_coupon)
-    dp.message.register(handle_broadcast_message,
-                        AdminActions.waiting_for_broadcast_message)
+    dp.message.register(handle_coupon_activation, AdminActions.waiting_for_coupon)
+    dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
     dp.message.register(list_users_command, Command(commands=['list_users']))

@@ -25,7 +25,6 @@ MONGODB_COUPONS_COLLECTION = os.getenv('MONGODB_COUPONS_COLLECTION')
 
 # User management configuration
 ADMIN_IDS = list(map(int, os.getenv('ADMIN_IDS', '').split(',')))
-FREE_LIMIT = int(os.getenv('FREE_LIMIT', 3))
 
 # Bot configuration
 BOT_USERNAME = os.getenv('BOT_USERNAME')
@@ -38,9 +37,7 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STRIPE_SUCCESS_URL = os.getenv('STRIPE_SUCCESS_URL', BOT_URL)
 STRIPE_CANCEL_URL = os.getenv('STRIPE_CANCEL_URL', BOT_URL)
 
-# Subscription plans
+# Subscription plans - only one option now
 SUBSCRIPTION_PLANS = {
-    '1month': {'price': 100, 'name': '1 Month Subscription'},
-    '3months': {'price': 500, 'name': '3 Months Subscription'},
-    'lifetime': {'price': 1000, 'name': 'Lifetime Subscription'}
+    '1month': {'price': 100, 'name': 'Monthly Access'}
 }
