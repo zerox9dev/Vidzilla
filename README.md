@@ -1,74 +1,81 @@
-# Social Media Video Downloader Bot
+# Vidzilla - Social Media Video Downloader Bot
 
-Easily download and share videos from your favorite social media platforms with our Telegram bot! Whether it's Instagram Reels, TikTok, YouTube, Facebook, Twitter, or Pinterest, this bot has got you covered. Perfect for those who want to save content for offline viewing or reposting.
+![Vidzilla Cover](cover.png)
 
-🎥 **Save videos from multiple platforms in a snap!**
-🚀 **Simple, fast, and user-friendly!**
-💯 **Updated documentation 2025!**
+## 🚀 Download videos from any platform!
 
-## Features
+Vidzilla is a powerful Telegram bot that lets you easily download and share videos from popular social media platforms. Just send a link, and get your video instantly!
 
-- Download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest
-- Receive videos as both video messages and downloadable files
-- User management system with free and premium tiers
-- Stripe integration for subscription payments
-- Admin functionality for generating coupons and viewing usage statistics
-- Simple and user-friendly interface
+### 🎬 Supported Platforms
 
-## Supported Platforms
+- **Instagram** - Reels and Posts
+- **TikTok** - All videos
+- **YouTube** - Videos and Shorts
+- **Facebook** - Videos and Reels
+- **Twitter/X** - Videos and GIFs
+- **Pinterest** - Video Pins
 
-| Platform  | Status | Implementation Method |
-| --------- | ------ | --------------------- |
-| Instagram | ✅     | Instaloader library   |
-| TikTok    | ✅     | RapidAPI             |
-| YouTube   | ✅     | RapidAPI             |
-| Facebook  | ✅     | RapidAPI             |
-| Twitter   | ✅     | RapidAPI             |
-| Pinterest | ✅     | RapidAPI             |
+### ✨ Features
 
-## Commands
+- **Simple to Use** - Just send a link, get your video!
+- **Fast Downloads** - Videos delivered in seconds
+- **Free to Use** - With optional $1 donation to support our servers
+- **Multiple Formats** - Receive videos as both playable messages and downloadable files
+- **Admin Tools** - Stats tracking, coupon generation, and broadcast messaging
 
-- `/start` - Begin interaction with the bot and receive usage instructions
-- `/help` - Get detailed information about the bot's functionality
-- `/subscribe` - View and select subscription plans
-- `/activate_coupon` - Activate a coupon code for premium access
+## 📱 How to Use
+
+1. **Start the bot**: Send `/start` to begin
+2. **Send a link**: Paste any supported video URL
+3. **Get your video**: Receive the video as both a playable message and a downloadable file
+4. **Support us**: Use `/donate` if you find the bot useful
+
+## 🤖 Bot Commands
+
+- `/start` - Start the bot and get usage instructions
+- `/donate` - Support the project with a small donation
+- `/activate_coupon` - Activate a coupon code (if you have one)
 
 ### Admin Commands
 
-- `/generate_coupon` - Generate a new coupon (admin only)
-- `/stats` - View usage statistics (admin only)
+- `/stats` - View usage statistics
+- `/generate_coupon` - Generate a new coupon code
+- `/list_users` - List users with usernames
+- `/broadcast` - Send a message to all users
 
-## Subscription Plans
+## 🛠️ Technical Setup
 
-- 1 month subscription - $1
-- 3 months subscription - $5
-- Lifetime subscription - $10
+### Prerequisites
 
-## Installation and Setup
+- Python 3.11+
+- MongoDB database
+- Telegram Bot Token
+- RapidAPI Key (for TikTok, YouTube, Facebook, Twitter, Pinterest)
+- Stripe account (for donations)
+
+### Installation
 
 1. Clone this repository:
-
    ```
-   git clone https://github.com/yourusername/social-media-video-downloader-bot.git
-   cd social-media-video-downloader-bot
+   git clone https://github.com/yourusername/vidzilla.git
+   cd vidzilla
    ```
 
-2. Create a virtual environment and install the required dependencies:
-
+2. Create a virtual environment and install dependencies:
    ```
    python -m venv .myebv
    source .myebv/bin/activate  # On Windows: .myebv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the project root (you can copy from `.env.example`):
-
+3. Create a `.env` file with the following variables:
    ```
-   # Existing variables
+   # Bot configuration
    BOT_TOKEN=your_telegram_bot_token
    RAPIDAPI_KEY=your_rapidapi_key
    WEBHOOK_PATH='/webhook'
    WEBHOOK_URL=your_webhook_url
+   BOT_USERNAME=your_bot_username
 
    # MongoDB configuration
    MONGODB_URI=your_mongodb_connection_string
@@ -76,21 +83,18 @@ Easily download and share videos from your favorite social media platforms with 
    MONGODB_USERS_COLLECTION=users
    MONGODB_COUPONS_COLLECTION=coupons
 
-   # User management configuration
+   # Admin configuration
    ADMIN_IDS=your_admin_telegram_id
-   FREE_LIMIT=3
 
    # Stripe configuration
    STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
    STRIPE_SECRET_KEY=your_stripe_secret_key
    STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-   BOT_USERNAME=your_bot_username
    STRIPE_SUCCESS_URL=your_success_url
    STRIPE_CANCEL_URL=your_cancel_url
    ```
 
-4. Set up the temporary directory for downloaded videos:
-
+4. Create the temporary directory for downloaded videos:
    ```
    mkdir temp_videos
    ```
@@ -100,67 +104,38 @@ Easily download and share videos from your favorite social media platforms with 
    python bot.py
    ```
 
-## Webhook Setup
+## 🌐 Webhook Setup
 
-For production, you need to set up a webhook. The bot supports ngrok for development:
+For production deployment, set up a webhook:
 
-1. Install ngrok and start it with:
+1. Get a domain with SSL certificate or use ngrok for development:
    ```
    ngrok http 8000
    ```
 
-2. Copy the ngrok URL and set it as your `WEBHOOK_URL` in the `.env` file.
+2. Update your `.env` file with the webhook URL.
 
-## Dependencies
+## 📦 Dependencies
 
-The project uses the following main dependencies:
-
-- `aiogram` - Modern and fully asynchronous framework for Telegram Bot API
-- `aiohttp` - Asynchronous HTTP client/server framework
+- `aiogram` - Modern and fully asynchronous Telegram Bot API framework
+- `aiohttp` - Asynchronous HTTP client/server
 - `python-dotenv` - Environment variable management
 - `pymongo` - MongoDB driver
 - `requests` - HTTP requests library
-- `instaloader` - Library for downloading content from Instagram
-- `stripe` - Stripe API client for payments
-- `asyncio` - Asynchronous I/O library
+- `instaloader` - Instagram content downloader
+- `stripe` - Payment processing
 
-## API Usage
+## 📊 Implementation Details
 
-This bot uses two main methods for downloading content:
+- **Instagram**: Uses Instaloader library for direct downloads
+- **Other Platforms**: Uses RapidAPI's "social-media-video-downloader" API
+- **Database**: MongoDB for user data and coupon management
+- **Payments**: Stripe for donation processing
 
-1. **Instagram**: Uses the Instaloader library for downloading Instagram Reels and Posts
-2. **Other platforms**: Uses the "auto-download-all-in-one" API from RapidAPI to fetch videos from TikTok, YouTube, Facebook, Twitter, and Pinterest
-
-## Technical Notes
-
-- The bot might show a "403 Forbidden" error when accessing Instagram's GraphQL API. This is normal behavior as Instagram restricts automated access, but the Instaloader library has fallback methods that still allow successful downloads in most cases.
-- For other platforms, the API might have rate limits depending on your RapidAPI subscription plan.
-- Make sure your MongoDB server is running and accessible before starting the bot.
-
-## User Experience
-
-1. Users start with a limited number of free downloads (default: 3)
-2. After reaching the limit, they need to subscribe or use a coupon
-3. Videos are sent both as a playable video message and as a downloadable file
-4. For Instagram posts that contain images instead of videos, the images are sent as photos
-
-## Stripe Integration
-
-This bot uses Stripe for handling payments. It supports both credit card payments and PayPal.
-
-To set up Stripe for production payments:
-
-1. Create a Stripe account at https://stripe.com if you haven't already.
-2. In the Stripe Dashboard, navigate to the API keys section.
-3. Copy your live secret key and publishable key.
-4. Update your `.env` file with these live keys.
-5. Set up a webhook in the Stripe Dashboard pointing to your webhook URL.
-6. To enable PayPal, connect your PayPal account in the Stripe Dashboard.
-
-## Note
-
-Ensure you comply with the terms of service of all supported platforms when using this bot.
-
-## License
+## 📝 License
 
 [MIT License](LICENSE)
+
+---
+
+Made with ❤️
