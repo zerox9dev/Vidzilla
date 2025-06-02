@@ -35,42 +35,18 @@ class AdminActions(StatesGroup):
 
 async def send_welcome(message: Message, state: FSMContext):
     await message.answer(
-        f"""<b>👋 Hi, Welcome!</b>
+        f"""<b>👋 Welcome!</b>
 
-I can download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
+I download videos from Instagram, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
-<b>✨ Free Downloads:</b> You can download videos for free! If you find this bot useful, please consider making a $1 donation to support our server costs.
+<b>✨ Free Downloads</b> with optional $1 donation to support our servers.
 
-To use the bot, simply send me a video link from any supported platform.
+Send me any video link to get started.
 
-<b>Available commands:</b>
-/start - Start working with the bot
-/help - Get detailed help
-/donate - Make a voluntary donation to support our work
-
-""",
+Commands: /donate""",
         parse_mode="HTML"
     )
     await state.set_state(DownloadVideo.waiting_for_link)
-
-
-async def send_help(message: Message):
-    help_text = """This bot helps download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
-
-How to use:
-1. Send the bot a link to a video
-2. The bot will process the link and return the video in two formats:
- - As a video message
- - As a document file
-
-All downloads are FREE! If you find this bot useful, please consider making a $1 donation to support our server costs with the /donate command.
-
-Commands:
-/start - Start working with the bot
-/help - Show this help message
-/donate - Make a voluntary donation to support our work"""
-
-    await message.answer(help_text)
 
 
 async def process_link(message: Message, state: FSMContext, bot: Bot):
@@ -208,7 +184,6 @@ async def handle_broadcast_message(message: Message, state: FSMContext, bot: Bot
 
 def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
-    dp.message.register(send_help, Command(commands=['help']))
     dp.message.register(donate_command, Command(commands=['donate', 'subscribe']))
     dp.message.register(generate_coupon_command, Command(commands=['generate_coupon']))
     dp.message.register(stats_command, Command(commands=['stats']))
