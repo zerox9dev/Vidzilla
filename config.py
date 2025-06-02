@@ -39,5 +39,5 @@ STRIPE_CANCEL_URL = os.getenv('STRIPE_CANCEL_URL', BOT_URL)
 
 # Subscription plans - only one option now
 SUBSCRIPTION_PLANS = {
-    '1month': {'price': 100, 'name': 'Monthly Access'}
+    '1month': {'price': 100, 'name': 'Support Donation'}
 }

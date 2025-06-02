@@ -17,6 +17,9 @@ from utils.user_management import (
     get_users_with_usernames,
     users_collection,
     broadcast_message_to_all_users,
+    get_user,
+    increment_downloads,
+    create_user,
 )
 
 
@@ -36,14 +39,14 @@ async def send_welcome(message: Message, state: FSMContext):
 
 I can download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
-<b>🔒 Subscription Required:</b> To use this bot, a monthly subscription of $1 is required. This small fee helps us maintain our servers.
+<b>✨ Free Downloads:</b> You can download videos for free! If you find this bot useful, please consider making a $1 donation to support our server costs.
 
-To use the bot, simply send me a video link from any supported platform after subscribing.
+To use the bot, simply send me a video link from any supported platform.
 
 <b>Available commands:</b>
 /start - Start working with the bot
 /help - Get detailed help
-/subscribe - Subscribe to use the bot
+/donate - Make a voluntary donation to support our work
 
 """,
         parse_mode="HTML"
@@ -55,16 +58,17 @@ async def send_help(message: Message):
     help_text = """This bot helps download videos from Instagram Reels, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
 How to use:
-1. Subscribe to the bot for $1/month using the /subscribe command
-2. Send the bot a link to a video
-3. The bot will process the link and return the video in two formats:
+1. Send the bot a link to a video
+2. The bot will process the link and return the video in two formats:
  - As a video message
  - As a document file
+
+All downloads are FREE! If you find this bot useful, please consider making a $1 donation to support our server costs with the /donate command.
 
 Commands:
 /start - Start working with the bot
 /help - Show this help message
-/subscribe - Subscribe to use the bot"""
+/donate - Make a voluntary donation to support our work"""
 
     await message.answer(help_text)
 
@@ -74,9 +78,12 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     user_id = message.from_user.id
     username = message.from_user.username
     
-    if not check_user_subscription(user_id, username):
-        await message.answer(get_subscription_required_message())
-        return
+    # Increment download counter but don't check for subscription
+    if get_user(user_id):
+        increment_downloads(user_id)
+    else:
+        create_user(user_id, username)
+        increment_downloads(user_id)
 
     await message.answer("Processing your link...")
     try:
@@ -100,19 +107,19 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     await state.set_state(DownloadVideo.waiting_for_link)
 
 
-async def subscribe_command(message: types.Message, state: FSMContext):
+async def donate_command(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     keyboard = []
 
     plan = '1month'
     details = SUBSCRIPTION_PLANS[plan]
     price_in_dollars = details['price'] / 100  # Convert cents to dollars
-    button_text = f"{details['name']} - ${price_in_dollars:.2f}"
+    button_text = f"Donate ${price_in_dollars:.2f} to support us"
     checkout_url = create_checkout_session(plan, user_id)
     keyboard.append([types.InlineKeyboardButton(text=button_text, url=checkout_url)])
 
     reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-    await message.answer("To use this bot, a subscription is required. This helps us maintain our servers and provide high-quality service:", reply_markup=reply_markup)
+    await message.answer("Thank you for considering a donation! Your support helps us maintain our servers and continue providing this service:", reply_markup=reply_markup)
 
 
 async def generate_coupon_command(message: Message, state: FSMContext):
@@ -202,7 +209,7 @@ async def handle_broadcast_message(message: Message, state: FSMContext, bot: Bot
 def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
     dp.message.register(send_help, Command(commands=['help']))
-    dp.message.register(subscribe_command, Command(commands=['subscribe']))
+    dp.message.register(donate_command, Command(commands=['donate', 'subscribe']))
     dp.message.register(generate_coupon_command, Command(commands=['generate_coupon']))
     dp.message.register(stats_command, Command(commands=['stats']))
     dp.message.register(activate_coupon_command, Command(commands=['activate_coupon']))

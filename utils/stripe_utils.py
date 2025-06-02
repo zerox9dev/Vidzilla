@@ -20,8 +20,8 @@ def create_checkout_session(plan, user_id):
             'price_data': {
                 'currency': 'usd',
                 'product_data': {
-                    'name': SUBSCRIPTION_PLANS[plan]['name'],
-                    'description': 'Monthly access to download videos from social media platforms',
+                    'name': 'Support Donation',
+                    'description': 'One-time donation to support our video download service',
                 },
                 'unit_amount': SUBSCRIPTION_PLANS[plan]['price'],
             },

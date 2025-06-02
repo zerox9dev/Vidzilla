@@ -104,7 +104,7 @@ def activate_coupon(user_id, coupon_code):
 
 
 def get_subscription_required_message():
-    return "To use this bot, you need to subscribe for $1 per month. This small fee helps us maintain our servers and provide you with high-quality service.\n\nUse /subscribe command to get started."
+    return "Downloads are free! If you find this bot useful, please consider making a $1 donation to support our server costs.\n\nUse /donate command to support us."
 
 
 async def update_subscription(user_id, plan):
