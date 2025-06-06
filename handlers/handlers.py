@@ -39,9 +39,9 @@ async def send_welcome(message: Message, state: FSMContext):
 
 I download videos from Instagram, TikTok, YouTube, Facebook, Twitter, and Pinterest.
 
-<b>✨ Free Downloads</b> with optional $1 donation to support our servers.
-
 Send me any video link to get started.
+
+Also check my speech-to-text bot: @voiceletbot
 
 Commands: /donate""",
         parse_mode="HTML"
