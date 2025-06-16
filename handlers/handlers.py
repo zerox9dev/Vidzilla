@@ -20,6 +20,8 @@ from utils.user_management import (
     get_user,
     increment_downloads,
     create_user,
+    update_user_language,
+    get_user_language,
 )
 
 
@@ -34,6 +36,19 @@ class AdminActions(StatesGroup):
 
 
 async def send_welcome(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    language_code = message.from_user.language_code
+    
+    # Get or create user with language
+    user = get_user(user_id)
+    if user:
+        # Update language if it changed
+        if language_code and user.get('language') != language_code:
+            update_user_language(user_id, language_code)
+    else:
+        create_user(user_id, username, language_code)
+    
     await message.answer(
         f"""<b>👋 Welcome!</b>
 
@@ -53,12 +68,16 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     url = message.text
     user_id = message.from_user.id
     username = message.from_user.username
+    language_code = message.from_user.language_code
     
     # Increment download counter but don't check for subscription
     if get_user(user_id):
         increment_downloads(user_id)
+        # Update language if available
+        if language_code:
+            update_user_language(user_id, language_code)
     else:
-        create_user(user_id, username)
+        create_user(user_id, username, language_code)
         increment_downloads(user_id)
 
     await message.answer("Processing your link...")
@@ -119,6 +138,7 @@ async def stats_command(message: Message):
         f"Usage Statistics:\n\n"
         f"Total Users: {stats['total_users']}\n"
         f"Users With Username: {stats['users_with_username']}\n"
+        f"Users With Language: {stats['users_with_language']}\n"
         f"Active Subscriptions: {stats['active_subscriptions']}\n"
         f"Total Downloads: {stats['total_downloads']}\n"
         f"Unused Coupons: {stats['unused_coupons']}"
@@ -155,9 +175,40 @@ async def list_users_command(message: Message):
 
     # Limit to first 20 users to avoid message too long errors
     users = users[:20]
-    user_list = "\n".join([f"ID: {user['user_id']}, Username: @{user['username']}, Downloads: {user['downloads_count']}" for user in users])
+    user_list = "\n".join([
+        f"ID: {user['user_id']}, Username: @{user['username']}, "
+        f"Lang: {user.get('language', 'N/A')}, Downloads: {user['downloads_count']}"
+        for user in users
+    ])
     
     await message.answer(f"Users with usernames (showing first {len(users)}):\n\n{user_list}")
+
+
+async def language_stats_command(message: Message):
+    """Command to show statistics about users' languages."""
+    if not is_admin(message.from_user.id):
+        await message.answer("This command is only available for admins.")
+        return
+    
+    # Aggregate users by language
+    pipeline = [
+        {"$group": {"_id": "$language", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    language_stats = list(users_collection.aggregate(pipeline))
+    
+    if not language_stats:
+        await message.answer("No language statistics available.")
+        return
+    
+    # Format the statistics message
+    stats_message = "User language statistics:\n\n"
+    for stat in language_stats:
+        language = stat["_id"] if stat["_id"] else "Not specified"
+        count = stat["count"]
+        stats_message += f"{language}: {count} users\n"
+    
+    await message.answer(stats_message)
 
 
 async def broadcast_command(message: Message, state: FSMContext):
@@ -193,3 +244,4 @@ def register_handlers(dp):
     dp.message.register(handle_coupon_activation, AdminActions.waiting_for_coupon)
     dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
     dp.message.register(list_users_command, Command(commands=['list_users']))
+    dp.message.register(language_stats_command, Command(commands=['language_stats']))

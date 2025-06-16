@@ -37,15 +37,30 @@ def get_user(user_id):
     return users_collection.find_one({'user_id': user_id})
 
 
-def create_user(user_id, username=None):
+def create_user(user_id, username=None, language=None):
     user = {
         'user_id': user_id,
         'username': username,
         'downloads_count': 0,
-        'subscription_end': None
+        'subscription_end': None,
+        'language': language
     }
     users_collection.insert_one(user)
     return user
+
+
+def update_user_language(user_id, language):
+    """Update the user's language preference"""
+    users_collection.update_one(
+        {'user_id': user_id},
+        {'$set': {'language': language}}
+    )
+
+
+def get_user_language(user_id):
+    """Get the user's language preference"""
+    user = get_user(user_id)
+    return user.get('language') if user else None
 
 
 def increment_downloads(user_id):
@@ -55,9 +70,13 @@ def increment_downloads(user_id):
     )
 
 
-def check_user_subscription(user_id, username=None):
+def check_user_subscription(user_id, username=None, language=None):
     """Check if user has an active subscription"""
-    user = get_user(user_id) or create_user(user_id, username)
+    user = get_user(user_id) or create_user(user_id, username, language)
+
+    # Update language if it's provided and different from stored
+    if language and user.get('language') != language:
+        update_user_language(user_id, language)
 
     if user['subscription_end'] and user['subscription_end'] > datetime.now():
         increment_downloads(user_id)
@@ -135,20 +154,22 @@ def get_usage_stats():
     total_downloads = sum(user['downloads_count']
                           for user in users_collection.find())
     unused_coupons = coupons_collection.count_documents({'used': False})
+    users_with_language = users_collection.count_documents({'language': {'$ne': None}})
 
     return {
         'total_users': total_users,
         'users_with_username': users_with_username,
         'active_subscriptions': active_subscriptions,
         'total_downloads': total_downloads,
-        'unused_coupons': unused_coupons
+        'unused_coupons': unused_coupons,
+        'users_with_language': users_with_language
     }
 
 
 def get_users_with_usernames():
     return list(users_collection.find(
         {'username': {'$ne': None}}, 
-        {'user_id': 1, 'username': 1, 'downloads_count': 1, 'subscription_end': 1}
+        {'user_id': 1, 'username': 1, 'downloads_count': 1, 'subscription_end': 1, 'language': 1}
     ))
 
 
