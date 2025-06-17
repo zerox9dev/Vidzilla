@@ -41,3 +41,11 @@ STRIPE_CANCEL_URL = os.getenv('STRIPE_CANCEL_URL', BOT_URL)
 SUBSCRIPTION_PLANS = {
     '1month': {'price': 100, 'name': 'Support Donation'}
 }
+
+# Required channels for accessing the bot
+# Format: {'channel_id': {'title': 'Channel Name', 'url': 'https://t.me/channel_username'}}
+REQUIRED_CHANNELS = {
+    # Update these values with your actual channel IDs, names, and URLs
+    '@talentx_tg': {'title': 'TalentX', 'url': 'https://t.me/talentx_tg'},
+    '@Pix2Code': {'title': 'Pix2Code', 'url': 'https://t.me/Pix2Code'}
+}

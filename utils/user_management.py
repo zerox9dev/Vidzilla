@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
+from aiogram import Bot
+from aiogram.exceptions import TelegramAPIError
 
 from config import (
     ADMIN_IDS,
@@ -12,6 +14,7 @@ from config import (
     MONGODB_DB_NAME,
     MONGODB_URI,
     MONGODB_USERS_COLLECTION,
+    REQUIRED_CHANNELS,
 )
 
 # Set up logging
@@ -68,6 +71,36 @@ def increment_downloads(user_id):
         {'user_id': user_id},
         {'$inc': {'downloads_count': 1}}
     )
+
+
+async def check_channel_subscription(user_id, bot):
+    """Check if the user is subscribed to all required channels
+    
+    Args:
+        user_id: The user ID to check
+        bot: The bot instance to use for API calls
+        
+    Returns:
+        tuple: (is_subscribed, not_subscribed_channels)
+            is_subscribed: True if the user is subscribed to all channels
+            not_subscribed_channels: List of channels the user is not subscribed to
+    """
+    not_subscribed = []
+    
+    for channel_id, channel_info in REQUIRED_CHANNELS.items():
+        try:
+            chat_member = await bot.get_chat_member(chat_id=channel_id, user_id=user_id)
+            status = chat_member.status
+            
+            # Consider as subscribed if member, administrator or creator
+            if status not in ['member', 'administrator', 'creator']:
+                not_subscribed.append(channel_info)
+        except TelegramAPIError as e:
+            logger.error(f"Error checking subscription for channel {channel_id}: {e}")
+            # If there's an error, assume the user is not subscribed
+            not_subscribed.append(channel_info)
+    
+    return len(not_subscribed) == 0, not_subscribed
 
 
 def check_user_subscription(user_id, username=None, language=None):

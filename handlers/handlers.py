@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from config import ADMIN_IDS, SUBSCRIPTION_PLANS
+from config import ADMIN_IDS, SUBSCRIPTION_PLANS, REQUIRED_CHANNELS
 from handlers import facebook, instagram, pinterest, tiktok, twitter, youtube
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
@@ -22,6 +22,7 @@ from utils.user_management import (
     create_user,
     update_user_language,
     get_user_language,
+    check_channel_subscription,
 )
 
 
@@ -49,19 +50,38 @@ async def send_welcome(message: Message, state: FSMContext):
     else:
         create_user(user_id, username, language_code)
     
-    await message.answer(
-        f"""<b>👋 Welcome!</b>
-
-I download videos from Instagram, TikTok, YouTube, Facebook, Twitter, and Pinterest.
+    welcome_message = f"""<b>👋 Welcome!</b>
 
 Send me any video link to get started.
 
-Also check my speech-to-text bot: @voiceletbot
+<b>⚠️ Important: You need to subscribe to these channels to use the bot:</b>
+"""
+    
+    # Add channel information to welcome message
+    for channel_id, info in REQUIRED_CHANNELS.items():
+        welcome_message += f"\n- <a href='{info['url']}'>{info['title']}</a>"
+    
+    welcome_message += """
 
-Commands: /donate""",
-        parse_mode="HTML"
-    )
+<b>Also check my free bots:</b> 💬 translate bot @Ninjatrbot and 🔊 speech-to-text @voiceletbot
+
+
+Commands: /donate"""
+    
+    await message.answer(welcome_message, parse_mode="HTML", disable_web_page_preview=True)
     await state.set_state(DownloadVideo.waiting_for_link)
+
+
+async def create_subscription_keyboard():
+    """Create a keyboard with subscription channel buttons"""
+    keyboard = []
+    for channel_id, info in REQUIRED_CHANNELS.items():
+        keyboard.append([InlineKeyboardButton(text=f"Subscribe to {info['title']}", url=info['url'])])
+    
+    # Add a button to check subscription status
+    keyboard.append([InlineKeyboardButton(text="✅ Check my subscription", callback_data="check_subscription")])
+    
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 async def process_link(message: Message, state: FSMContext, bot: Bot):
@@ -69,6 +89,21 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     user_id = message.from_user.id
     username = message.from_user.username
     language_code = message.from_user.language_code
+    
+    # Check if user is subscribed to required channels
+    is_subscribed, not_subscribed_channels = await check_channel_subscription(user_id, bot)
+    
+    # If user is not subscribed to all required channels, show a message with subscription instructions
+    if not is_subscribed:
+        subscription_message = "<b>⚠️ You need to subscribe to these channels to use the bot:</b>\n\n"
+        for channel_info in not_subscribed_channels:
+            subscription_message += f"- <a href='{channel_info['url']}'>{channel_info['title']}</a>\n"
+        
+        subscription_message += "\nAfter subscribing, send your link again."
+        
+        keyboard = await create_subscription_keyboard()
+        await message.answer(subscription_message, parse_mode="HTML", reply_markup=keyboard, disable_web_page_preview=True)
+        return
     
     # Increment download counter but don't check for subscription
     if get_user(user_id):
@@ -100,6 +135,26 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
         await message.answer(f"Error processing video: {str(e)}")
 
     await state.set_state(DownloadVideo.waiting_for_link)
+
+
+async def check_subscription_callback(callback_query: types.CallbackQuery, bot: Bot):
+    """Handle callback for checking subscription status"""
+    user_id = callback_query.from_user.id
+    is_subscribed, not_subscribed_channels = await check_channel_subscription(user_id, bot)
+    
+    if is_subscribed:
+        await callback_query.answer("✅ You are subscribed to all required channels!")
+        await callback_query.message.answer("✅ You are subscribed to all required channels! You can now use the bot.")
+    else:
+        await callback_query.answer("❌ You need to subscribe to all required channels")
+        subscription_message = "<b>⚠️ You are not subscribed to these channels:</b>\n\n"
+        for channel_info in not_subscribed_channels:
+            subscription_message += f"- <a href='{channel_info['url']}'>{channel_info['title']}</a>\n"
+        
+        keyboard = await create_subscription_keyboard()
+        await callback_query.message.answer(subscription_message, parse_mode="HTML", reply_markup=keyboard, disable_web_page_preview=True)
+    
+    await callback_query.answer()
 
 
 async def donate_command(message: types.Message, state: FSMContext):
@@ -245,3 +300,4 @@ def register_handlers(dp):
     dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
     dp.message.register(list_users_command, Command(commands=['list_users']))
     dp.message.register(language_stats_command, Command(commands=['language_stats']))
+    dp.callback_query.register(check_subscription_callback, lambda c: c.data == "check_subscription")
