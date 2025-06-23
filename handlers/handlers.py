@@ -88,6 +88,21 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     username = message.from_user.username
     language_code = message.from_user.language_code
     
+    # Получаем текущее состояние пользователя
+    current_state = await state.get_state()
+    
+    # Если пользователь ещё не инициализирован (не нажал /start)
+    if not current_state:
+        # Создаем пользователя, если его нет
+        user = get_user(user_id)
+        if not user:
+            create_user(user_id, username, language_code)
+            # Отправляем краткое приветствие
+            await message.answer("👋 Welcome to the Video Downloader Bot! Processing your link...")
+        
+        # Устанавливаем состояние
+        await state.set_state(DownloadVideo.waiting_for_link)
+    
     # Check if user is subscribed to required channels
     is_subscribed, not_subscribed_channels = await check_channel_subscription(user_id, bot)
     
@@ -326,9 +341,16 @@ def register_handlers(dp):
     dp.message.register(stats_command, Command(commands=['stats']))
     dp.message.register(activate_coupon_command, Command(commands=['activate_coupon']))
     dp.message.register(broadcast_command, Command(commands=['broadcast']))
-    dp.message.register(process_link, DownloadVideo.waiting_for_link)
     dp.message.register(handle_coupon_activation, AdminActions.waiting_for_coupon)
     dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
     dp.message.register(list_users_command, Command(commands=['list_users']))
     dp.message.register(language_stats_command, Command(commands=['language_stats']))
     dp.callback_query.register(check_subscription_callback, lambda c: c.data == "check_subscription")
+    
+    # Обрабатывать ссылки в любом состоянии
+    dp.message.register(process_link, lambda msg: msg.text and any(
+        platform_id in msg.text.lower() for platform_id in PLATFORM_IDENTIFIERS
+    ))
+    
+    # Также обрабатывать ссылки в состоянии waiting_for_link (для обратной совместимости)
+    dp.message.register(process_link, DownloadVideo.waiting_for_link)
