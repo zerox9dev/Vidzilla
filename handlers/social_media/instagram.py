@@ -160,7 +160,7 @@ async def process_instagram(message, bot, instagram_url, progress_msg=None):
                     doc_result = await bot.send_document(
                         chat_id=message.chat.id,
                         document=doc_file,
-                        disable_content_type_detection=False  # Изменено на False для проверки
+                        disable_content_type_detection=True  
                     )
                     logger.info("Video sent as document with disable_content_type_detection=False")
                     logger.info(f"Document send result: {doc_result}")
