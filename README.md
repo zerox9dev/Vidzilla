@@ -2,10 +2,12 @@
 
 ![Vidzilla Cover](cover.png)
 
-# 🌐 Language / Мова / Язык
+# 🌐 Language / Мова / Язык / 语言 / اللغة
 - [English](#english)
 - [Українська](#українська)
 - [Русский](#русский)
+- [中文](#中文)
+- [العربية](#العربية)
 
 <a name="english"></a>
 # English
@@ -350,57 +352,57 @@ Vidzilla теперь поддерживает более 40 платформ, �
 - `/donate` - Поддержать проект небольшим пожертвованием
 - `/activate_coupon` - Активировать купон (если он у вас есть)
 
-### Команды администратора
+### Команды адміністратора
 
-- `/stats` - Просмотреть статистику использования
-- `/generate_coupon` - Сгенерировать новый код купона
-- `/list_users` - Список пользователей с именами пользователей
-- `/broadcast` - Отправить сообщение всем пользователям
+- `/stats` - Переглянути статистику використання
+- `/generate_coupon` - Згенерувати новий код купона
+- `/list_users` - Список користувачів з іменами користувачів
+- `/broadcast` - Надіслати повідомлення всім користувачам
 
-## 🛠️ Техническая настройка
+## 🛠️ Технічне налаштування
 
-### Предварительные требования
+### Передумови
 
 - Python 3.11+
-- База данных MongoDB
+- База даних MongoDB
 - Токен бота Telegram
 - Ключ RapidAPI (для TikTok, YouTube, Facebook, Twitter, Pinterest)
-- Аккаунт Stripe (для пожертвований)
+- Обліковий запис Stripe (для пожертвувань)
 
-### Установка
+### Встановлення
 
-1. Клонируйте этот репозиторий:
+1. Клонуйте цей репозиторій:
    ```
    git clone https://github.com/yourusername/vidzilla.git
    cd vidzilla
    ```
 
-2. Создайте виртуальное окружение и установите зависимости:
+2. Створіть віртуальне середовище та встановіть залежності:
    ```
    python -m venv .myebv
    source .myebv/bin/activate  # На Windows: .myebv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-3. Создайте файл `.env` со следующими переменными:
+3. Створіть файл `.env` з наступними змінними:
    ```
-   # Конфигурация бота
+   # Конфігурація бота
    BOT_TOKEN=your_telegram_bot_token
    RAPIDAPI_KEY=your_rapidapi_key
    WEBHOOK_PATH='/webhook'
    WEBHOOK_URL=your_webhook_url
    BOT_USERNAME=your_bot_username
 
-   # Конфигурация MongoDB
+   # Конфігурація MongoDB
    MONGODB_URI=your_mongodb_connection_string
    MONGODB_DB_NAME=your_db_name
    MONGODB_USERS_COLLECTION=users
    MONGODB_COUPONS_COLLECTION=coupons
 
-   # Конфигурация администратора
+   # Конфігурація адміністратора
    ADMIN_IDS=your_admin_telegram_id
 
-   # Конфигурация Stripe
+   # Конфігурація Stripe
    STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
    STRIPE_SECRET_KEY=your_stripe_secret_key
    STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
@@ -408,43 +410,255 @@ Vidzilla теперь поддерживает более 40 платформ, �
    STRIPE_CANCEL_URL=your_cancel_url
    ```
 
-4. Создайте временный каталог для загруженных видео:
+4. Створіть тимчасовий каталог для завантажених відео:
    ```
    mkdir temp_videos
    ```
 
-5. Запустите бота:
+5. Запустіть бота:
    ```
    python bot.py
    ```
 
-## 🌐 Настройка вебхука
+## 🌐 Налаштування вебхука
 
-Для развертывания в производстве настройте вебхук:
+Для розгортання у виробництві налаштуйте вебхук:
 
-1. Получите домен с SSL-сертификатом или используйте ngrok для разработки:
+1. Отримайте домен із SSL-сертифікатом або використовуйте ngrok для розробки:
    ```
    ngrok http 8000
    ```
 
-2. Обновите файл `.env` с URL вебхука.
+2. Оновіть файл `.env` з URL вебхука.
 
-## 📦 Зависимости
+## 📦 Залежності
 
-- `aiogram` - Современный и полностью асинхронный фреймворк для Telegram Bot API
-- `aiohttp` - Асинхронный HTTP-клиент/сервер
-- `python-dotenv` - Управление переменными окружения
+- `aiogram` - Сучасний та повністю асинхронний фреймворк для Telegram Bot API
+- `aiohttp` - Асинхронний HTTP-клієнт/сервер
+- `python-dotenv` - Управління змінними середовища
 - `pymongo` - Драйвер MongoDB
-- `requests` - Библиотека HTTP-запросов
-- `instaloader` - Загрузчик контента Instagram
-- `stripe` - Обработка платежей
+- `requests` - Бібліотека HTTP-запитів
+- `instaloader` - Завантажувач контенту Instagram
+- `stripe` - Обробка платежів
 
-## 📊 Детали реализации
+## 📊 Деталі реалізації
 
-- **Instagram**: Использует библиотеку Instaloader для прямых загрузок
-- **Другие платформы**: Использует API "auto-download-all-in-one" от RapidAPI
-- **База данных**: MongoDB для данных пользователей и управления купонами
-- **Платежи**: Stripe для обработки пожертвований
+- **Instagram**: Використовує бібліотеку Instaloader для прямих завантажень
+- **Інші платформи**: Використовує API "auto-download-all-in-one" від RapidAPI
+- **База даних**: MongoDB для даних користувачів та управління купонами
+- **Платежі**: Stripe для обробки пожертвувань
+
+---
+
+<a name="中文"></a>
+# 中文
+
+## 🚀 从任何平台下载视频！
+
+Vidzilla 是一个功能强大的 Telegram 机器人，可让您轻松下载和分享来自流行社交媒体平台的视频。只需发送链接，立即获取您的视频！
+
+### 🎬 支持的平台
+
+Vidzilla 现在支持超过 40 个平台，包括：
+
+- **Instagram** - Reels 和帖子
+- **TikTok** - 所有视频
+- **YouTube** - 视频和 Shorts
+- **Facebook** - 视频和 Reels
+- **Twitter/X** - 视频和 GIF
+- **Pinterest** - 视频 Pins
+- **Reddit** - 视频
+- **Snapchat** - 视频
+- **LinkedIn** - 视频
+- **Vimeo** - 视频
+- **Telegram** - 公共频道视频
+- **Bilibili** - 视频
+- **Tumblr** - 视频
+- **以及更多！** - 使用 `/help` 命令查看完整列表
+
+### ✨ 特点
+
+- **使用简单** - 只需发送链接，获取视频！
+- **快速下载** - 视频几秒钟内送达
+- **免费使用** - 可选择捐赠 $1 支持我们的服务器
+- **多种格式** - 同时接收可播放消息和可下载文件形式的视频
+- **管理工具** - 统计跟踪、优惠券生成和广播消息
+
+## 📱 如何使用
+
+1. **启动机器人**：发送 `/start` 开始
+2. **查看支持的平台**：发送 `/help` 查看所有支持的平台
+3. **发送链接**：粘贴任何支持的视频 URL
+4. **获取视频**：同时接收可播放消息和可下载文件形式的视频
+5. **支持我们**：如果觉得机器人有用，请使用 `/donate`
+
+## 🤖 机器人命令
+
+- `/start` - 启动机器人并获取使用说明
+- `/help` - 查看所有支持的平台和使用说明
+- `/donate` - 通过小额捐款支持项目
+- `/activate_coupon` - 激活优惠券代码（如果您有）
+
+## 🤖 机器人命令
+
+- `/start` - 启动机器人并获取使用说明
+- `/help` - 查看所有支持的平台和使用说明
+- `/donate` - 通过小额捐款支持项目
+- `/activate_coupon` - 激活优惠券代码（如果您有）
+
+### 管理工具
+
+- `/stats` - 查看使用统计
+- `/generate_coupon` - 生成新的优惠券代码
+- `/list_users` - 列出用户名用户
+- `/broadcast` - 向所有用户发送消息
+
+## 🛠️ 技术设置
+
+### 先决条件
+
+- Python 3.11+
+- MongoDB 数据库
+- Telegram 机器人令牌
+- RapidAPI 密钥（用于 TikTok、YouTube、Facebook、Twitter、Pinterest）
+- Stripe 账户（用于捐款）
+
+### 安装
+
+1. 克隆这个仓库：
+   ```
+   git clone https://github.com/yourusername/vidzilla.git
+   cd vidzilla
+   ```
+
+2. 创建虚拟环境并安装依赖项：
+   ```
+   python -m venv .myebv
+   source .myebv/bin/activate  # 在 Windows 上：.myebv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+3. 创建一个包含以下变量的 `.env` 文件：
+   ```
+   # 机器人配置
+   BOT_TOKEN=your_telegram_bot_token
+   RAPIDAPI_KEY=your_rapidapi_key
+   WEBHOOK_PATH='/webhook'
+   WEBHOOK_URL=your_webhook_url
+   BOT_USERNAME=your_bot_username
+
+   # MongoDB 配置
+   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_DB_NAME=your_db_name
+   MONGODB_USERS_COLLECTION=users
+   MONGODB_COUPONS_COLLECTION=coupons
+
+   # 管理员配置
+   ADMIN_IDS=your_admin_telegram_id
+
+   # Stripe 配置
+   STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   STRIPE_SUCCESS_URL=your_success_url
+   STRIPE_CANCEL_URL=your_cancel_url
+   ```
+
+4. 创建下载的视频临时目录：
+   ```
+   mkdir temp_videos
+   ```
+
+5. 运行机器人：
+   ```
+   python bot.py
+   ```
+
+## 🌐 Webhook 设置
+
+对于生产部署，设置 webhook：
+
+1. 获取带有 SSL 证书的域名或使用 ngrok 进行开发：
+   ```
+   ngrok http 8000
+   ```
+
+2. 更新 `.env` 文件中的 webhook URL。
+
+## 📦 依赖项
+
+- `aiogram` - 现代且完全异步的 Telegram Bot API 框架
+- `aiohttp` - 异步 HTTP 客户端/服务器
+- `python-dotenv` - 环境变量管理
+- `pymongo` - MongoDB 驱动程序
+- `requests` - HTTP 请求库
+- `instaloader` - Instagram 内容下载器
+- `stripe` - 付款处理
+
+## 📊 实现细节
+
+- **Instagram**：使用 Instaloader 库进行直接下载
+- **其他平台**：使用 RapidAPI 的 "auto-download-all-in-one" API
+- **数据库**：MongoDB 用于用户数据和优惠券管理
+- **付款**：Stripe 用于捐款处理
+
+---
+
+<a name="العربية"></a>
+# العربية
+
+## 🚀 قم بتنزيل مقاطع الفيديو من أي منصة!
+
+Vidzilla هو روبوت تيليجرام قوي يتيح لك تنزيل ومشاركة مقاطع الفيديو من منصات التواصل الاجتماعي الشهيرة بسهولة. ما عليك سوى إرسال رابط، واحصل على الفيديو الخاص بك على الفور!
+
+### 🎬 المنصات المدعومة
+
+يدعم Vidzilla الآن أكثر من 40 منصة، بما في ذلك:
+
+- **Instagram** - Reels والمنشورات
+- **TikTok** - جميع مقاطع الفيديو
+- **YouTube** - الفيديوهات والمقاطع القصيرة
+- **Facebook** - الفيديوهات والمقاطع القصيرة
+- **Twitter/X** - الفيديوهات وملفات GIF
+- **Pinterest** - مقاطع الفيديو
+- **Reddit** - الفيديوهات
+- **Snapchat** - الفيديوهات
+- **LinkedIn** - الفيديوهات
+- **Vimeo** - الفيديوهات
+- **Telegram** - فيديوهات القنوات العامة
+- **Bilibili** - الفيديوهات
+- **Tumblr** - الفيديوهات
+- **والكثير غيرها!** - استخدم الأمر `/help` لمشاهدة القائمة الكاملة
+
+### ✨ الميزات
+
+- **سهل الاستخدام** - فقط أرسل رابطًا، واحصل على الفيديو!
+- **تنزيلات سريعة** - يتم تسليم مقاطع الفيديو في ثوانٍ
+- **مجاني للاستخدام** - مع تبرع اختياري بقيمة دولار واحد لدعم خوادمنا
+- **تنسيقات متعددة** - استلم مقاطع الفيديو كرسائل قابلة للتشغيل وملفات قابلة للتنزيل
+- **أدوات المسؤول** - تتبع الإحصائيات، وإنشاء الكوبونات، ورسائل البث
+
+## 📱 كيفية الاستخدام
+
+1. **ابدأ الروبوت**: أرسل `/start` للبدء
+2. **تحقق من المنصات المدعومة**: أرسل `/help` لمشاهدة جميع المنصات المدعومة
+3. **أرسل رابطًا**: الصق أي عنوان URL لفيديو مدعوم
+4. **احصل على الفيديو الخاص بك**: استلم الفيديو كرسالة قابلة للتشغيل وكملف قابل للتنزيل
+5. **ادعمنا**: استخدم `/donate` إذا وجدت الروبوت مفيدًا
+
+## 🤖 أوامر الروبوت
+
+- `/start` - بدء تشغيل الروبوت والحصول على تعليمات الاستخدام
+- `/help` - عرض جميع المنصات المدعومة وتعليمات الاستخدام
+- `/donate` - دعم المشروع بتبرع صغير
+- `/activate_coupon` - تفعيل رمز الكوبون (إذا كان لديك)
+
+### أدوات المسؤول
+
+- `/stats` - عرض إحصائيات الاستخدام
+- `/generate_coupon` - إنشاء رمز كوبون جديد
+- `/list_users` - قائمة بأسماء المستخدمين
+- `/broadcast` - إرسال رسالة إلى جميع المستخدمين
 
 ---
 
