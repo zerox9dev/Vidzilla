@@ -63,10 +63,7 @@ Send me any video link to get started.
     
     welcome_message += """
 
-<b>Also check my free bots:</b> 💬 translate bot @Ninjatrbot and 🔊 speech-to-text @voiceletbot
-
-
-Commands: /donate"""
+<b>Also check my free bots:</b>\n Translate bot <b>@Ninjatrbot</b>\n Speech-to-text <b>@voiceletbot</b>\n AI ChatGPT <b>@DockMixAIbot</b>"""
     
     await message.answer(welcome_message, parse_mode="HTML", disable_web_page_preview=True)
     await state.set_state(DownloadVideo.waiting_for_link)
