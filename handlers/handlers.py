@@ -55,15 +55,6 @@ async def send_welcome(message: Message, state: FSMContext):
 Send me any video link to get started.
 Use /help to see the list of supported platforms.
 
-<b>⚠️ Important: You need to subscribe to these channels to use the bot:</b>
-"""
-    
-    # Add channel information to welcome message
-    for channel_id, info in REQUIRED_CHANNELS.items():
-        welcome_message += f"\n- <a href='{info['url']}'>{info['title']}</a>"
-    
-    welcome_message += """
-
 <b>Also check my free bots:</b>\n Translate bot <b>@Ninjatrbot</b>\n Speech-to-text <b>@voiceletbot</b>\n AI ChatGPT <b>@DockMixAIbot</b>"""
     
     await message.answer(welcome_message, parse_mode="HTML", disable_web_page_preview=True)
@@ -73,11 +64,18 @@ Use /help to see the list of supported platforms.
 async def create_subscription_keyboard():
     """Create a keyboard with subscription channel buttons"""
     keyboard = []
-    for channel_id, info in REQUIRED_CHANNELS.items():
-        keyboard.append([InlineKeyboardButton(text=f"Subscribe to {info['title']}", url=info['url'])])
+    row = []
     
-    # Add a button to check subscription status
-    keyboard.append([InlineKeyboardButton(text="✅ Check my subscription", callback_data="check_subscription")])
+    # Add subscription buttons horizontally in one row
+    for channel_id, info in REQUIRED_CHANNELS.items():
+        row.append(InlineKeyboardButton(text=f"{info['title']}", url=info['url']))
+    
+    # Add all subscription buttons in one row
+    if row:
+        keyboard.append(row)
+    
+    # Add a button to check subscription status in a separate row
+    keyboard.append([InlineKeyboardButton(text="✅ Check subscription", callback_data="check_subscription")])
     
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
@@ -109,10 +107,8 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
     # If user is not subscribed to all required channels, show a message with subscription instructions
     if not is_subscribed:
         subscription_message = "<b>⚠️ You need to subscribe to these channels to use the bot:</b>\n\n"
-        for channel_info in not_subscribed_channels:
-            subscription_message += f"- <a href='{channel_info['url']}'>{channel_info['title']}</a>\n"
-        
-        subscription_message += "\nAfter subscribing, send your link again."
+        row = []
+
         
         keyboard = await create_subscription_keyboard()
         await message.answer(subscription_message, parse_mode="HTML", reply_markup=keyboard, disable_web_page_preview=True)
@@ -162,8 +158,6 @@ async def check_subscription_callback(callback_query: types.CallbackQuery, bot: 
     else:
         await callback_query.answer("❌ You need to subscribe to all required channels")
         subscription_message = "<b>⚠️ You are not subscribed to these channels:</b>\n\n"
-        for channel_info in not_subscribed_channels:
-            subscription_message += f"- <a href='{channel_info['url']}'>{channel_info['title']}</a>\n"
         
         keyboard = await create_subscription_keyboard()
         await callback_query.message.answer(subscription_message, parse_mode="HTML", reply_markup=keyboard, disable_web_page_preview=True)
