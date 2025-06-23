@@ -6,8 +6,11 @@ from aiogram.types import URLInputFile
 from config import RAPIDAPI_KEY
 
 
-async def process_tiktok(message, bot, tiktok_url):
+async def process_tiktok(message, bot, tiktok_url, progress_msg=None):
     try:
+        if progress_msg:
+            await progress_msg.edit_text("⏳ Processing TikTok link... 50%")
+            
         url = "https://auto-download-all-in-one.p.rapidapi.com/v1/social/autolink"
         payload = {"url": tiktok_url}
         headers = {
@@ -19,9 +22,15 @@ async def process_tiktok(message, bot, tiktok_url):
         response = requests.post(url, json=payload, headers=headers)
 
         data = response.json()
+        
+        if progress_msg:
+            await progress_msg.edit_text("⏳ Processing TikTok link... 75%")
 
         if response.status_code == 200 and 'medias' in data and len(data['medias']) > 0:
             video_url = data['medias'][0]['url']
+            
+            if progress_msg:
+                await progress_msg.edit_text("⏳ Processing TikTok link... 90%")
 
             video_file = URLInputFile(video_url)
             await bot.send_video(
@@ -36,10 +45,19 @@ async def process_tiktok(message, bot, tiktok_url):
                 document=doc_file,
                 disable_content_type_detection=True
             )
+            
+            if progress_msg:
+                await progress_msg.edit_text("✅ TikTok video processed successfully! 100%")
         else:
             error_message = data.get(
                 'message', 'Failed to retrieve the video from TikTok')
-            await bot.send_message(message.chat.id, f"Error: {error_message}")
+            if progress_msg:
+                await progress_msg.edit_text(f"❌ Error: {error_message}")
+            else:
+                await bot.send_message(message.chat.id, f"Error: {error_message}")
 
     except Exception as e:
-        await bot.send_message(message.chat.id, f"Error processing Tiktok video: {str(e)}")
+        if progress_msg:
+            await progress_msg.edit_text(f"❌ Error processing TikTok video: {str(e)}")
+        else:
+            await bot.send_message(message.chat.id, f"Error processing Tiktok video: {str(e)}")

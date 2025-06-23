@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def process_instagram(message, bot, instagram_url):
+async def process_instagram(message, bot, instagram_url, progress_msg=None):
     # Generate a unique identifier for this request
     request_id = str(uuid.uuid4())
     temp_dir = os.path.join(TEMP_DIRECTORY, request_id)
@@ -29,6 +29,9 @@ async def process_instagram(message, bot, instagram_url):
 
         if "/reel/" in instagram_url or "/p/" in instagram_url:
             try:
+                if progress_msg:
+                    await progress_msg.edit_text("⏳ Processing Instagram link... 50%")
+                
                 logger.info(f"""Attempting to download video from: {
                             instagram_url}""")
                 
@@ -53,6 +56,9 @@ async def process_instagram(message, bot, instagram_url):
                 post = instaloader.Post.from_shortcode(L.context, shortcode)
                 L.download_post(post, target=request_id)
                 
+                if progress_msg:
+                    await progress_msg.edit_text("⏳ Processing Instagram link... 75%")
+                
                 # Find the downloaded files using glob pattern
                 video_files = glob.glob(os.path.join(temp_dir, "**/*.mp4"), recursive=True)
                 
@@ -63,6 +69,9 @@ async def process_instagram(message, bot, instagram_url):
                     image_files = [f for f in image_files if "_profile_pic.jpg" not in f]
                     
                     if image_files:
+                        if progress_msg:
+                            await progress_msg.edit_text("⏳ Processing Instagram link... 90%")
+                            
                         image_path = image_files[0]
                         logger.info(f"Found image file: {image_path}")
                         
@@ -92,6 +101,9 @@ async def process_instagram(message, bot, instagram_url):
 
                 logger.info(f"""Video file size: {
                             os.path.getsize(video_path)} bytes""")
+                            
+                if progress_msg:
+                    await progress_msg.edit_text("⏳ Processing Instagram link... 90%")
 
                 # Send as video
                 video_file = FSInputFile(video_path)
@@ -106,6 +118,9 @@ async def process_instagram(message, bot, instagram_url):
                     disable_content_type_detection=True
                 )
 
+                if progress_msg:
+                    await progress_msg.edit_text("✅ Instagram video processed successfully! 100%")
+                    
                 logger.info("Video successfully sent")
             except Exception as e:
                 logger.error(
@@ -114,15 +129,24 @@ async def process_instagram(message, bot, instagram_url):
                 # Check if this is an Instagram rate limiting error (401 Unauthorized)
                 error_message = str(e)
                 if "401 Unauthorized" in error_message and "Please wait a few minutes before you try again" in error_message:
-                    await bot.send_message(
-                        message.chat.id, 
-                        "Instagram's servers are currently busy. Please try again in a few minutes."
-                    )
+                    if progress_msg:
+                        await progress_msg.edit_text("❌ Instagram's servers are currently busy. Please try again in a few minutes.")
+                    else:
+                        await bot.send_message(
+                            message.chat.id, 
+                            "Instagram's servers are currently busy. Please try again in a few minutes."
+                        )
                 else:
-                    await bot.send_message(message.chat.id, f"Error downloading video: {str(e)}")
+                    if progress_msg:
+                        await progress_msg.edit_text(f"❌ Error downloading video: {str(e)}")
+                    else:
+                        await bot.send_message(message.chat.id, f"Error downloading video: {str(e)}")
         else:
             logger.warning(f"Invalid Instagram URL received: {instagram_url}")
-            await bot.send_message(message.chat.id, "Invalid Instagram URL. Please provide a link to a post or reel.")
+            if progress_msg:
+                await progress_msg.edit_text("❌ Invalid Instagram URL. Please provide a link to a post or reel.")
+            else:
+                await bot.send_message(message.chat.id, "Invalid Instagram URL. Please provide a link to a post or reel.")
 
     except Exception as e:
         logger.error(f"Error processing Instagram video: {str(e)}")
@@ -130,12 +154,18 @@ async def process_instagram(message, bot, instagram_url):
         # Check if this is an Instagram rate limiting error (401 Unauthorized)
         error_message = str(e)
         if "401 Unauthorized" in error_message and "Please wait a few minutes before you try again" in error_message:
-            await bot.send_message(
-                message.chat.id, 
-                "Instagram's servers are currently busy. Please try again in a few minutes."
-            )
+            if progress_msg:
+                await progress_msg.edit_text("❌ Instagram's servers are currently busy. Please try again in a few minutes.")
+            else:
+                await bot.send_message(
+                    message.chat.id, 
+                    "Instagram's servers are currently busy. Please try again in a few minutes."
+                )
         else:
-            await bot.send_message(message.chat.id, f"Error processing Instagram video: {str(e)}")
+            if progress_msg:
+                await progress_msg.edit_text(f"❌ Error processing Instagram video: {str(e)}")
+            else:
+                await bot.send_message(message.chat.id, f"Error processing Instagram video: {str(e)}")
     finally:
         # Clean up the temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)

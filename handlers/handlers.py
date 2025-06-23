@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config import ADMIN_IDS, SUBSCRIPTION_PLANS, REQUIRED_CHANNELS
-from handlers import facebook, instagram, pinterest, tiktok, twitter, youtube
+from handlers.social_media import facebook, instagram, pinterest, tiktok, twitter, youtube
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,
@@ -112,24 +112,37 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
         create_user(user_id, username, language_code)
         increment_downloads(user_id)
 
-    await message.answer("Processing your link...")
+    progress_msg = await message.answer("⏳ Processing your link... 0%")
     try:
         if 'instagram.com' in url:
-            await instagram.process_instagram(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing Instagram link... 25%")
+            await instagram.process_instagram(message, bot, url, progress_msg)
         elif 'tiktok.com' in url:
-            await tiktok.process_tiktok(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing TikTok link... 25%") 
+            await tiktok.process_tiktok(message, bot, url, progress_msg)
         elif 'x.com' in url or 'twitter.com' in url:
-            await twitter.process_twitter(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing Twitter link... 25%")
+            await twitter.process_twitter(message, bot, url, progress_msg)
         elif 'youtube.com' in url or 'youtu.be' in url:
-            await youtube.process_youtube(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing YouTube link... 25%")
+            await youtube.process_youtube(message, bot, url, progress_msg)
         elif 'facebook.com' in url:
-            await facebook.process_facebook(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing Facebook link... 25%")
+            await facebook.process_facebook(message, bot, url, progress_msg)
         elif 'pin.it' in url or 'pinterest.com' in url:
-            await pinterest.process_pinterest(message, bot, url)
+            await progress_msg.edit_text("⏳ Processing Pinterest link... 25%")
+            await pinterest.process_pinterest(message, bot, url, progress_msg)
         else:
-            await message.answer("Unsupported platform. Please provide a link from Instagram, TikTok, YouTube, Facebook, Twitter, or Pinterest.")
+            await progress_msg.edit_text("❌ Unsupported platform. Please provide a link from Instagram, TikTok, YouTube, Facebook, Twitter, or Pinterest.")
+            return
     except Exception as e:
-        await message.answer(f"Error processing video: {str(e)}")
+        await progress_msg.edit_text(f"❌ Error processing video: {str(e)}")
+    else:
+        # Success - remove the progress message
+        try:
+            await progress_msg.delete()
+        except:
+            pass
 
     await state.set_state(DownloadVideo.waiting_for_link)
 
