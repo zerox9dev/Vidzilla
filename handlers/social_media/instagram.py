@@ -14,6 +14,28 @@ from config import BASE_DIR, TEMP_DIRECTORY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Добавим функцию для получения информации о видео
+async def get_video_info(video_path):
+    try:
+        import cv2
+        cap = cv2.VideoCapture(video_path)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+        return {
+            "width": width,
+            "height": height,
+            "aspect_ratio": f"{width}:{height}",
+            "fps": fps,
+            "frames": frame_count,
+            "duration": frame_count / fps if fps else 0
+        }
+    except Exception as e:
+        logger.error(f"Error getting video info: {str(e)}")
+        return {"error": str(e)}
+
 
 async def process_instagram(message, bot, instagram_url, progress_msg=None):
     # Generate a unique identifier for this request
@@ -96,6 +118,10 @@ async def process_instagram(message, bot, instagram_url, progress_msg=None):
                 video_path = video_files[0]
                 logger.info(f"Found video file: {video_path}")
                 
+                # Логируем информацию о видео
+                video_info = await get_video_info(video_path)
+                logger.info(f"Video info: {video_info}")
+                
                 if os.path.getsize(video_path) == 0:
                     raise ValueError("Downloaded video file is empty")
 
@@ -107,16 +133,39 @@ async def process_instagram(message, bot, instagram_url, progress_msg=None):
 
                 # Send as video
                 video_file = FSInputFile(video_path)
-                await bot.send_video(chat_id=message.chat.id, video=video_file)
+                logger.info("Sending video as video...")
+                try:
+                    # Добавляем параметры width и height если они доступны
+                    video_params = {}
+                    if "width" in video_info and "height" in video_info:
+                        video_params["width"] = video_info["width"]
+                        video_params["height"] = video_info["height"]
+                        video_params["supports_streaming"] = True
+                    
+                    send_result = await bot.send_video(
+                        chat_id=message.chat.id, 
+                        video=video_file,
+                        **video_params
+                    )
+                    logger.info(f"Video sent as video with params: {video_params}")
+                    logger.info(f"Send result: {send_result}")
+                except Exception as e:
+                    logger.error(f"Error sending video as video: {str(e)}")
 
                 # Send as document
                 file_name = f"instagram_video_{message.from_user.id}.mp4"
                 doc_file = FSInputFile(video_path, filename=file_name)
-                await bot.send_document(
-                    chat_id=message.chat.id,
-                    document=doc_file,
-                    disable_content_type_detection=True
-                )
+                logger.info("Sending video as document...")
+                try:
+                    doc_result = await bot.send_document(
+                        chat_id=message.chat.id,
+                        document=doc_file,
+                        disable_content_type_detection=False  # Изменено на False для проверки
+                    )
+                    logger.info("Video sent as document with disable_content_type_detection=False")
+                    logger.info(f"Document send result: {doc_result}")
+                except Exception as e:
+                    logger.error(f"Error sending video as document: {str(e)}")
 
                 if progress_msg:
                     await progress_msg.edit_text("✅ Instagram video processed successfully! 100%")
