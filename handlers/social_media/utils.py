@@ -1,8 +1,9 @@
 import json
 import requests
 from aiogram.types import URLInputFile
+from handlers.social_media import instagram
 
-from config import RAPIDAPI_KEY
+from config import RAPIDAPI_KEY, PLATFORM_IDENTIFIERS
 
 
 async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):
@@ -68,4 +69,35 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         if progress_msg:
             await progress_msg.edit_text(f"❌ Error processing {platform_name} video: {str(e)}")
         else:
-            await bot.send_message(message.chat.id, f"Error processing {platform_name} video: {str(e)}") 
+            await bot.send_message(message.chat.id, f"Error processing {platform_name} video: {str(e)}")
+
+
+async def detect_platform_and_process(message, bot, url, progress_msg=None):
+    """
+    Detects social media platform type from URL and processes the video
+    
+    Args:
+        message: User message object
+        bot: Bot instance
+        url: Social media URL to process
+        progress_msg: Message object for progress updates
+        
+    Returns:
+        bool: True if platform was detected and processed, False if not supported
+    """
+    # Special handling for Instagram using a separate module
+    if 'instagram.com' in url:
+        if progress_msg:
+            await progress_msg.edit_text("⏳ Processing Instagram link... 25%")
+        await instagram.process_instagram(message, bot, url, progress_msg)
+        return True
+    
+    # Process all other platforms through the common method
+    for domain, platform_name in PLATFORM_IDENTIFIERS.items():
+        if domain in url and domain != 'instagram.com': # Instagram is already processed above
+            if progress_msg:
+                await progress_msg.edit_text(f"⏳ Processing {platform_name} link... 25%")
+            await process_social_media_video(message, bot, url, platform_name, progress_msg)
+            return True
+    
+    return False 

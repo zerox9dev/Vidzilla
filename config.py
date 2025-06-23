@@ -49,3 +49,74 @@ REQUIRED_CHANNELS = {
     '@talentx_tg': {'title': 'TalentX', 'url': 'https://t.me/talentx_tg'},
     '@Pix2Code': {'title': 'Pix2Code', 'url': 'https://t.me/Pix2Code'}
 }
+
+# Dictionary for identifying platform based on URL
+PLATFORM_IDENTIFIERS = {
+    # Social Media Platforms
+    'instagram.com': 'Instagram',
+    'tiktok.com': 'TikTok',
+    'douyin.com': 'Douyin',
+    'capcut.com': 'Capcut',
+    'threads.net': 'Threads',
+    'facebook.com': 'Facebook',
+    'fb.com': 'Facebook',
+    'kuaishou.com': 'Kuaishou',
+    'kwai.com': 'Kuaishou',
+    'espn.com': 'ESPN',
+    'pinterest.com': 'Pinterest',
+    'pin.it': 'Pinterest',
+    'imdb.com': 'IMDB',
+    'imgur.com': 'Imgur',
+    'ifunny.co': 'iFunny',
+    'izlesene.com': 'Izlesene',
+    'reddit.com': 'Reddit',
+    'youtube.com': 'YouTube',
+    'youtu.be': 'YouTube',
+    'twitter.com': 'Twitter',
+    'x.com': 'Twitter',
+    'vimeo.com': 'Vimeo',
+    'snapchat.com': 'Snapchat',
+    'bilibili.com': 'Bilibili',
+    'dailymotion.com': 'Dailymotion',
+    'sharechat.com': 'Sharechat',
+    'likee.video': 'Likee',
+    'linkedin.com': 'LinkedIn',
+    'tumblr.com': 'Tumblr',
+    'hipi.co.in': 'Hipi',
+    't.me': 'Telegram',
+    'telegram.me': 'Telegram',
+    'telegram.org': 'Telegram',
+    'getstickerpack.com': 'GetStickerpack',
+    'bitchute.com': 'Bitchute',
+    'febspot.com': 'Febspot',
+    '9gag.com': '9GAG',
+    'ok.ru': 'Odnoklassniki',
+    'rumble.com': 'Rumble',
+    'streamable.com': 'Streamable',
+    'ted.com': 'TED',
+    'tv.sohu.com': 'SohuTV',
+    
+    # Adult content platforms
+    'pornbox.com': 'Pornbox',
+    'xvideos.com': 'Xvideos',
+    'xnxx.com': 'Xnxx',
+    
+    # Chinese platforms
+    'xiaohongshu.com': 'Xiaohongshu',
+    'ixigua.com': 'Ixigua',
+    'weibo.com': 'Weibo',
+    'miaopai.com': 'Miaopai',
+    'meipai.com': 'Meipai',
+    'xiaoying.tv': 'Xiaoying',
+    'yingke.com': 'Yingke',
+    'sina.com.cn': 'Sina',
+    
+    # Other platforms
+    'bsky.app': 'Bluesky',
+    'soundcloud.com': 'SoundCloud',
+    'mixcloud.com': 'Mixcloud',
+    'spotify.com': 'Spotify',
+    'open.spotify.com': 'Spotify',
+    'zingmp3.vn': 'Zingmp3',
+    'bandcamp.com': 'Bandcamp'
+}

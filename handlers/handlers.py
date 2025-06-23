@@ -4,8 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from config import ADMIN_IDS, SUBSCRIPTION_PLANS, REQUIRED_CHANNELS
-from handlers.social_media import facebook, instagram, pinterest, tiktok, twitter, youtube
+from config import ADMIN_IDS, SUBSCRIPTION_PLANS, REQUIRED_CHANNELS, PLATFORM_IDENTIFIERS
+from handlers.social_media.utils import detect_platform_and_process
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,
@@ -53,6 +53,7 @@ async def send_welcome(message: Message, state: FSMContext):
     welcome_message = f"""<b>👋 Welcome!</b>
 
 Send me any video link to get started.
+Use /help to see the list of supported platforms.
 
 <b>⚠️ Important: You need to subscribe to these channels to use the bot:</b>
 """
@@ -113,27 +114,15 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
         increment_downloads(user_id)
 
     progress_msg = await message.answer("⏳ Processing your link... 0%")
+    
     try:
-        if 'instagram.com' in url:
-            await progress_msg.edit_text("⏳ Processing Instagram link... 25%")
-            await instagram.process_instagram(message, bot, url, progress_msg)
-        elif 'tiktok.com' in url:
-            await progress_msg.edit_text("⏳ Processing TikTok link... 25%") 
-            await tiktok.process_tiktok(message, bot, url, progress_msg)
-        elif 'x.com' in url or 'twitter.com' in url:
-            await progress_msg.edit_text("⏳ Processing Twitter link... 25%")
-            await twitter.process_twitter(message, bot, url, progress_msg)
-        elif 'youtube.com' in url or 'youtu.be' in url:
-            await progress_msg.edit_text("⏳ Processing YouTube link... 25%")
-            await youtube.process_youtube(message, bot, url, progress_msg)
-        elif 'facebook.com' in url:
-            await progress_msg.edit_text("⏳ Processing Facebook link... 25%")
-            await facebook.process_facebook(message, bot, url, progress_msg)
-        elif 'pin.it' in url or 'pinterest.com' in url:
-            await progress_msg.edit_text("⏳ Processing Pinterest link... 25%")
-            await pinterest.process_pinterest(message, bot, url, progress_msg)
-        else:
-            await progress_msg.edit_text("❌ Unsupported platform. Please provide a link from Instagram, TikTok, YouTube, Facebook, Twitter, or Pinterest.")
+        # Use the new function to detect the platform and process the video
+        platform_processed = await detect_platform_and_process(message, bot, url, progress_msg)
+        
+        if not platform_processed:
+            await progress_msg.edit_text(
+                "❌ Unsupported platform. Please use /help to see all supported platforms."
+            )
             return
     except Exception as e:
         await progress_msg.edit_text(f"❌ Error processing video: {str(e)}")
@@ -298,8 +287,40 @@ async def handle_broadcast_message(message: Message, state: FSMContext, bot: Bot
     await state.set_state(DownloadVideo.waiting_for_link)
 
 
+async def help_command(message: Message):
+    """Display help information and list of supported platforms"""
+    # Get a unique and sorted list of supported platforms
+    supported_platforms = sorted(set(PLATFORM_IDENTIFIERS.values()))
+    platforms_list = "\n".join(f"• {platform}" for platform in supported_platforms)
+    
+    help_message = f"""<b>📋 Supported Platforms:</b>
+
+{platforms_list}
+
+<b>How to use the bot:</b>
+1. Subscribe to the required channels
+2. Copy a video link from any supported platform
+3. Paste the link in this chat
+4. Wait for the bot to process and download the video
+
+<b>Available commands:</b>
+/start - Start the bot and see welcome message
+/help - Show this help message with supported platforms
+/donate - Support the developer
+
+<b>Required channel subscriptions:</b>
+"""
+    
+    # Add channel information to help message
+    for channel_id, info in REQUIRED_CHANNELS.items():
+        help_message += f"\n- <a href='{info['url']}'>{info['title']}</a>"
+    
+    await message.answer(help_message, parse_mode="HTML", disable_web_page_preview=True)
+
+
 def register_handlers(dp):
     dp.message.register(send_welcome, Command(commands=['start']))
+    dp.message.register(help_command, Command(commands=['help']))
     dp.message.register(donate_command, Command(commands=['donate', 'subscribe']))
     dp.message.register(generate_coupon_command, Command(commands=['generate_coupon']))
     dp.message.register(stats_command, Command(commands=['stats']))
