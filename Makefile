@@ -54,10 +54,16 @@ run:
 	python bot.py
 
 test:
-	pytest tests/ -v
+	pytest tests/ -v --tb=short --maxfail=5
+
+test-quick:
+	pytest tests/test_compression_config.py tests/test_size_checking.py -v --tb=short
 
 test-cov:
-	pytest tests/ -v --cov=utils --cov=handlers --cov-report=html --cov-report=term
+	pytest tests/ -v --cov=utils --cov=handlers --cov-report=html --cov-report=term --tb=short
+
+test-full:
+	pytest tests/ -v --cov=utils --cov=handlers --cov-report=html --cov-report=xml --tb=short --timeout=300
 
 lint:
 	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics

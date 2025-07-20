@@ -1,0 +1,84 @@
+name: Health Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install minimal dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install python-dotenv pymongo
+
+    - name: Basic syntax check
+      run: |
+        python -m py_compile bot.py
+        python -m py_compile config.py
+        python -c "import config; print('✅ Config loads successfully')"
+
+    - name: Check environment example
+      run: |
+        if [ ! -f .env.example ]; then
+          echo "❌ .env.example not found"
+          exit 1
+        fi
+        echo "✅ .env.example exists"
+
+    - name: Check required files
+      run: |
+        required_files=(
+          "README.md"
+          "requirements.txt"
+          "Dockerfile"
+          "docker-compose.yml"
+          "LICENSE"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Required file missing: $file"
+            exit 1
+          fi
+        done
+        echo "✅ All required files present"
+
+    - name: Check Docker build context
+      run: |
+        if [ ! -f .dockerignore ]; then
+          echo "⚠️ .dockerignore not found"
+        fi
+        echo "✅ Docker context check complete"
+
+    - name: Project structure validation
+      run: |
+        echo "📁 Project structure:"
+        find . -type f -name "*.py" | head -10
+        echo "✅ Python files found"
+        
+        if [ -d "handlers" ] && [ -d "utils" ] && [ -d "tests" ]; then
+          echo "✅ Core directories present"
+        else
+          echo "❌ Missing core directories"
+          exit 1
+        fi
+
+    - name: Summary
+      run: |
+        echo "## Health Check Results" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Basic syntax validation passed" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Configuration loading works" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Required files present" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Project structure valid" >> $GITHUB_STEP_SUMMARY

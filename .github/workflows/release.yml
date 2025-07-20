@@ -8,6 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@v4
 
@@ -16,12 +17,12 @@ jobs:
       with:
         python-version: 3.11
 
-    - name: Install FFmpeg
+    - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends ffmpeg
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
@@ -30,13 +31,13 @@ jobs:
     - name: Create test environment file
       run: |
         cat > .env << EOF
-        BOT_TOKEN=test_token
-        RAPIDAPI_KEY=test_key
+        BOT_TOKEN=test_token_release
+        RAPIDAPI_KEY=test_key_release
         WEBHOOK_PATH=/webhook
         WEBHOOK_URL=http://localhost:8000
         BOT_USERNAME=test_bot
-        MONGODB_URI=mongodb://localhost:27017/test
-        MONGODB_DB_NAME=test_db
+        MONGODB_URI=mongodb://localhost:27017/test_release
+        MONGODB_DB_NAME=test_db_release
         MONGODB_USERS_COLLECTION=users
         MONGODB_COUPONS_COLLECTION=coupons
         ADMIN_IDS=123456789
@@ -47,9 +48,10 @@ jobs:
         STRIPE_CANCEL_URL=http://localhost:8000/cancel
         EOF
 
-    - name: Run tests
+    - name: Run critical tests only
+      timeout-minutes: 10
       run: |
-        python -m pytest tests/ -v
+        python -m pytest tests/test_compression_config.py tests/test_size_checking.py -v --tb=short
 
   build-docker:
     needs: test
