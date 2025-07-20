@@ -186,7 +186,12 @@ class TestProgressiveCompressionStrategy:
                     with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
                         with pytest.raises(CompressionTimeoutError, match="Compression timeout"):
                             await video_compressor._attempt_compression(
-                                input_file.name, output_file.name, 28, 1280, 720, 1  # 1 second timeout
+                                input_file.name,
+                                output_file.name,
+                                28,
+                                1280,
+                                720,
+                                1,  # 1 second timeout
                             )
 
                         mock_process.kill.assert_called_once()
@@ -288,7 +293,9 @@ class TestProgressiveCompressionStrategy:
                     with patch(
                         "utils.video_compression.get_file_size_mb", return_value=60.0
                     ):  # Always too large
-                        with pytest.raises(CompressionQualityError, match="Unable to compress video to target size"):
+                        with pytest.raises(
+                            CompressionQualityError, match="Unable to compress video to target size"
+                        ):
                             await video_compressor._progressive_compression_strategy(
                                 input_file.name, output_file.name, 45.0, sample_video_info
                             )
