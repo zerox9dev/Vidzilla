@@ -7,6 +7,7 @@ from aiohttp import web
 
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL
 from handlers.handlers import register_handlers
+from handlers.admin import register_admin_handlers
 from utils.stripe_webhook_handler import setup_stripe_webhook
 
 logging.basicConfig(level=logging.INFO)
@@ -51,6 +52,7 @@ async def create_app():
     logging.info("Webhook deleted")
 
     register_handlers(dp)
+    register_admin_handlers(dp)
 
     app = web.Application()
     app['bot'] = bot
