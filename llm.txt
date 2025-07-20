@@ -1,0 +1,95 @@
+# Vidzilla - Telegram Video Downloader Bot
+
+## Project Overview
+Vidzilla is a powerful Telegram bot that allows users to download videos from various social media platforms including Instagram, TikTok, YouTube, and many others. The bot is built with Python using the aiogram framework and provides a seamless video downloading experience.
+
+## Key Features
+- Multi-platform video downloading (Instagram, TikTok, YouTube, Twitter, Facebook, etc.)
+- Subscription-based access control
+- Channel subscription requirements
+- Admin panel with broadcasting capabilities
+- User management and statistics
+- Coupon system for premium access
+- Stripe payment integration
+- Multi-language support
+- Download progress tracking
+
+## Technical Stack
+- **Language**: Python 3.x
+- **Framework**: aiogram (Telegram Bot API)
+- **Database**: MongoDB
+- **Payment**: Stripe
+- **Deployment**: Webhook-based with aiohttp
+- **Video Processing**: yt-dlp and platform-specific downloaders
+
+## Project Structure
+```
+├── bot.py                 # Main bot application
+├── config.py             # Configuration settings
+├── handlers/
+│   ├── handlers.py       # Main bot handlers
+│   ├── admin.py         # Admin-only commands and functions
+│   └── social_media/    # Platform-specific downloaders
+├── utils/               # Utility functions
+│   ├── user_management.py
+│   ├── stripe_utils.py
+│   └── stripe_webhook_handler.py
+└── requirements.txt     # Python dependencies
+```
+
+## Supported Platforms
+- Instagram (posts, reels, stories)
+- TikTok
+- YouTube (videos, shorts)
+- Twitter/X
+- Facebook
+- Reddit
+- And many more...
+
+## Admin Commands
+- `/stats` - View bot usage statistics
+- `/broadcast` - Send message to all users
+- `/restart_notification` - Send restart notification
+- `/generate_coupon` - Create subscription coupons
+- `/list_users` - List users with usernames
+- `/language_stats` - View language distribution
+
+## User Commands
+- `/start` - Initialize bot and show welcome message
+- `/help` - Display supported platforms and usage instructions
+- `/donate` - Support the developer
+- `/activate_coupon` - Activate premium subscription
+
+## Setup Instructions
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Configure environment variables in `config.py`
+4. Set up MongoDB database
+5. Configure Stripe for payments
+6. Set up Telegram webhook
+7. Run the bot: `python bot.py`
+
+## Environment Variables Required
+- `BOT_TOKEN` - Telegram bot token
+- `MONGODB_URI` - MongoDB connection string
+- `STRIPE_SECRET_KEY` - Stripe secret key
+- `WEBHOOK_URL` - Public webhook URL
+- `ADMIN_IDS` - List of admin user IDs
+
+## Repository Links
+- Primary: https://github.com/mirvald-space/Vidzilla
+- Mirror: https://github.com/MauriceWirthApps/TelegramSocialMediaVideoDownloader
+
+## License
+This project is for educational and personal use. Please respect platform terms of service when downloading content.
+
+## Contributing
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+## AI Assistant Notes
+This bot is actively maintained and uses modern Python async/await patterns. The codebase is well-structured with separation of concerns between handlers, utilities, and platform-specific downloaders. When working with this project, pay attention to:
+- Async/await patterns throughout the codebase
+- MongoDB document structure for users and subscriptions
+- Webhook-based deployment architecture
+- Platform-specific video extraction logic
+- Admin permission checks for sensitive operations
