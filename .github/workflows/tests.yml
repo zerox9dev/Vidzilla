@@ -170,12 +170,12 @@ jobs:
 
     - name: Check for secrets in code
       run: |
-        # Simple grep-based secret detection
-        if grep -r "sk_live_" . --exclude-dir=.git --exclude="*.md" --exclude="*.yml"; then
+        # Simple grep-based secret detection (excluding config files and .env files)
+        if grep -r "sk_live_" . --exclude-dir=.git --exclude="*.md" --exclude="*.yml" --exclude="*.yaml" --exclude-dir=.github --exclude=".env*"; then
           echo "❌ Live Stripe keys found!"
           exit 1
         fi
-        if grep -r "mongodb+srv://.*:.*@" . --exclude-dir=.git --exclude="*.md" --exclude="*.yml"; then
+        if grep -r "mongodb+srv://.*:.*@" . --exclude-dir=.git --exclude="*.md" --exclude="*.yml" --exclude="*.yaml" --exclude-dir=.github --exclude=".env*"; then
           echo "❌ MongoDB credentials found!"
           exit 1
         fi

@@ -243,6 +243,8 @@ A: This ensures Telegram compatibility. Original quality is preserved in documen
    cp .env.example .env
    # Edit .env with your credentials
    ```
+   
+   ⚠️ **SECURITY WARNING**: Never commit `.env` file to version control! It contains sensitive credentials.
 
 4. **Create directories and run:**
    ```bash
