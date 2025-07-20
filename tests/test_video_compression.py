@@ -1098,7 +1098,10 @@ class TestCompressionQualityAndSettings:
                 with patch.object(
                     video_compressor, "_attempt_compression", side_effect=mock_attempt_compression
                 ):
-                    with patch("utils.video_compression.get_file_size_mb", side_effect=mock_get_file_size_mb):
+                    with patch(
+                        "utils.video_compression.get_file_size_mb",
+                        side_effect=mock_get_file_size_mb,
+                    ):
                         result = await video_compressor.compress_if_needed(temp_path, 50)
 
                         # Should have tried multiple quality levels
