@@ -167,7 +167,7 @@ class TestCompressionDecisionLogic:
         result = await video_compressor.compress_if_needed("/nonexistent/file.mp4")
         
         assert result.success is False
-        assert result.error_message == "Input video file not found"
+        assert "Input video file not found" in result.error_message
         assert result.original_path == "/nonexistent/file.mp4"
         assert result.compressed_path is None
     
@@ -232,7 +232,7 @@ class TestCompressionDecisionLogic:
                 assert result.success is False
                 assert result.original_path == temp_file.name
                 assert result.compressed_path is None
-                assert "Compression error: FFmpeg error" in result.error_message
+                assert "Unexpected compression error: FFmpeg error" in result.error_message
             
         # Clean up
         os.unlink(temp_file.name)

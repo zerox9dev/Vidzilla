@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 Mirvald
+Copyright (c) 2025 Vidzilla Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,94 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This project uses the following third-party libraries:
+
+### FFmpeg
+- License: LGPL 2.1+ / GPL 2+ (depending on build configuration)
+- Website: https://ffmpeg.org/legal.html
+- Used for: Video processing and compression
+
+### Instaloader
+- License: MIT License
+- Repository: https://github.com/instaloader/instaloader
+- Used for: Instagram content downloading
+
+### aiogram
+- License: MIT License
+- Repository: https://github.com/aiogram/aiogram
+- Used for: Telegram Bot API framework
+
+### pymongo
+- License: Apache License 2.0
+- Repository: https://github.com/mongodb/mongo-python-driver
+- Used for: MongoDB database operations
+
+### python-dotenv
+- License: BSD 3-Clause License
+- Repository: https://github.com/theskumar/python-dotenv
+- Used for: Environment variable management
+
+### aiohttp
+- License: Apache License 2.0
+- Repository: https://github.com/aio-libs/aiohttp
+- Used for: Asynchronous HTTP client/server
+
+### requests
+- License: Apache License 2.0
+- Repository: https://github.com/psf/requests
+- Used for: HTTP requests
+
+### stripe
+- License: MIT License
+- Repository: https://github.com/stripe/stripe-python
+- Used for: Payment processing
+
+### opencv-python
+- License: MIT License
+- Repository: https://github.com/opencv/opencv-python
+- Used for: Video analysis and processing
+
+### psutil
+- License: BSD 3-Clause License
+- Repository: https://github.com/giampaolo/psutil
+- Used for: System monitoring
+
+### aiofiles
+- License: Apache License 2.0
+- Repository: https://github.com/Tinche/aiofiles
+- Used for: Asynchronous file operations
+
+### dnspython
+- License: ISC License
+- Repository: https://github.com/rthalley/dnspython
+- Used for: DNS resolution
+
+### pydantic
+- License: MIT License
+- Repository: https://github.com/pydantic/pydantic
+- Used for: Data validation
+
+---
+
+## Attribution
+
+If you use this software in your project, please include the following attribution:
+
+"Video downloading functionality powered by Vidzilla (https://github.com/yourusername/vidzilla)"
+
+## Disclaimer
+
+This software is provided for educational and personal use only. Users are responsible for complying with the terms of service of the platforms from which they download content. The developers of Vidzilla do not encourage or condone the violation of any platform's terms of service or copyright laws.
+
+By using this software, you agree to:
+- Only download content you have the right to download
+- Respect copyright and intellectual property rights
+- Comply with all applicable laws and platform terms of service
+- Use the software responsibly and ethically
+
+The developers of Vidzilla are not responsible for any misuse of this software or any legal consequences that may arise from its use.

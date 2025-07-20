@@ -24,7 +24,7 @@ MONGODB_USERS_COLLECTION = os.getenv('MONGODB_USERS_COLLECTION')
 MONGODB_COUPONS_COLLECTION = os.getenv('MONGODB_COUPONS_COLLECTION')
 
 # User management configuration
-ADMIN_IDS = list(map(int, os.getenv('ADMIN_IDS', '').split(',')))
+ADMIN_IDS = list(map(int, filter(None, os.getenv('ADMIN_IDS', '').split(','))))
 
 # Bot configuration
 BOT_USERNAME = os.getenv('BOT_USERNAME')

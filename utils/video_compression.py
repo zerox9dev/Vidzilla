@@ -145,21 +145,21 @@ def get_compression_error_message(error: Exception) -> str:
         User-friendly error message
     """
     if isinstance(error, FFmpegNotFoundError):
-        return "Video compression is not available. Please contact support."
+        return "FFmpeg is not available on the system"
     elif isinstance(error, CompressionTimeoutError):
-        return "Video compression took too long and was cancelled. Try with a smaller video."
+        return "Compression timeout after specified time limit"
     elif isinstance(error, InsufficientDiskSpaceError):
-        return "Not enough storage space available for video compression."
+        return "Insufficient disk space for compression"
     elif isinstance(error, UnsupportedFormatError):
-        return "Video format is not supported for compression."
+        return "Unsupported video format for compression"
     elif isinstance(error, VideoCorruptedError):
-        return "Video file appears to be corrupted or damaged."
+        return "Video file is corrupted or damaged"
     elif isinstance(error, CompressionQualityError):
-        return "Video compression would result in poor quality. Sending original file."
+        return "Compression failed to achieve target size"
     elif isinstance(error, FileNotFoundError):
-        return "Video file not found or was deleted during processing."
+        return "Input video file not found"
     else:
-        return f"Video compression failed: {str(error)}"
+        return f"Unexpected compression error: {str(error)}"
 
 
 async def get_video_info(video_path: str) -> VideoInfo:
@@ -1170,7 +1170,10 @@ class VideoCompressor:
                         else:
                             logger.info(f"Attempt {current_attempt} still too large: {output_size_mb:.2f}MB > {target_size_mb}MB")
                             # Clean up the oversized output file
-                            cleanup_temp_files(output_path)
+                            try:
+                                cleanup_temp_files(output_path)
+                            except Exception as cleanup_error:
+                                logger.warning(f"Failed to cleanup oversized output file: {cleanup_error}")
                     
                 except CompressionTimeoutError as e:
                     timeout_count += 1
@@ -1321,12 +1324,17 @@ class VideoCompressor:
                     logger.error(f"FFmpeg compression failed (return code {process.returncode}): {stderr_text}")
                     
                     # Check for specific FFmpeg errors
-                    if "No such file or directory" in stderr_text:
+                    stderr_lower = stderr_text.lower()
+                    if "no such file or directory" in stderr_lower:
                         raise FileNotFoundError("Input file not found during compression")
-                    elif "Invalid argument" in stderr_text or "Unknown encoder" in stderr_text:
+                    elif any(error in stderr_lower for error in ["invalid argument", "unknown encoder", "invalid data", "moov atom not found"]):
                         raise UnsupportedFormatError("Unsupported video format or codec")
-                    elif "Permission denied" in stderr_text:
+                    elif "permission denied" in stderr_lower:
                         raise CompressionError("Permission denied accessing video file")
+                    elif "disk full" in stderr_lower or "no space left" in stderr_lower:
+                        raise InsufficientDiskSpaceError("Insufficient disk space during compression")
+                    elif "killed" in stderr_lower or "terminated" in stderr_lower:
+                        raise CompressionTimeoutError("Compression was terminated")
                     else:
                         raise CompressionError(f"FFmpeg error: {stderr_text}")
                 

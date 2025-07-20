@@ -10,8 +10,18 @@ import pytest
 import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from utils.video_compression import VideoCompressor, VideoInfo
+from utils.video_compression import VideoCompressor, VideoInfo, CompressionError, CompressionTimeoutError
 from config import COMPRESSION_SETTINGS
+
+
+def safe_cleanup(*file_paths):
+    """Safely clean up temporary files."""
+    for file_path in file_paths:
+        try:
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+        except (FileNotFoundError, PermissionError):
+            pass
 
 
 class TestProgressiveCompressionStrategy:
@@ -109,11 +119,12 @@ class TestProgressiveCompressionStrategy:
                 
                 with patch('asyncio.create_subprocess_exec', return_value=mock_process):
                     with patch('os.path.exists', return_value=True):
-                        result = await video_compressor._attempt_compression(
-                            input_file.name, output_file.name, 28, 1280, 720, 300
-                        )
-                        
-                        assert result is True
+                        with patch('os.path.getsize', return_value=1024):  # Mock non-empty output file
+                            result = await video_compressor._attempt_compression(
+                                input_file.name, output_file.name, 28, 1280, 720, 300
+                            )
+                            
+                            assert result is True
                 
                 # Clean up
                 os.unlink(input_file.name)
@@ -134,11 +145,10 @@ class TestProgressiveCompressionStrategy:
                 mock_process.communicate = AsyncMock(return_value=(b'', b'FFmpeg error'))
                 
                 with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-                    result = await video_compressor._attempt_compression(
-                        input_file.name, output_file.name, 28, 1280, 720, 300
-                    )
-                    
-                    assert result is False
+                    with pytest.raises(CompressionError, match="FFmpeg error"):
+                        await video_compressor._attempt_compression(
+                            input_file.name, output_file.name, 28, 1280, 720, 300
+                        )
                 
                 # Clean up
                 os.unlink(input_file.name)
@@ -160,11 +170,11 @@ class TestProgressiveCompressionStrategy:
                 mock_process.wait = AsyncMock()
                 
                 with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-                    result = await video_compressor._attempt_compression(
-                        input_file.name, output_file.name, 28, 1280, 720, 1  # 1 second timeout
-                    )
+                    with pytest.raises(CompressionTimeoutError, match="Compression timeout"):
+                        await video_compressor._attempt_compression(
+                            input_file.name, output_file.name, 28, 1280, 720, 1  # 1 second timeout
+                        )
                     
-                    assert result is False
                     mock_process.kill.assert_called_once()
                 
                 # Clean up

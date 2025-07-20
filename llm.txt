@@ -78,7 +78,6 @@ Vidzilla is a powerful Telegram bot that allows users to download videos from va
 
 ## Repository Links
 - Primary: https://github.com/mirvald-space/Vidzilla
-- Mirror: https://github.com/MauriceWirthApps/TelegramSocialMediaVideoDownloader
 
 ## License
 This project is for educational and personal use. Please respect platform terms of service when downloading content.

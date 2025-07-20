@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio
+
+    - name: Create test environment file
+      run: |
+        cat > .env << EOF
+        BOT_TOKEN=test_token
+        RAPIDAPI_KEY=test_key
+        WEBHOOK_PATH=/webhook
+        WEBHOOK_URL=http://localhost:8000
+        BOT_USERNAME=test_bot
+        MONGODB_URI=mongodb://localhost:27017/test
+        MONGODB_DB_NAME=test_db
+        MONGODB_USERS_COLLECTION=users
+        MONGODB_COUPONS_COLLECTION=coupons
+        ADMIN_IDS=123456789
+        STRIPE_PUBLISHABLE_KEY=pk_test_key
+        STRIPE_SECRET_KEY=sk_test_key
+        STRIPE_WEBHOOK_SECRET=whsec_test
+        STRIPE_SUCCESS_URL=http://localhost:8000/success
+        STRIPE_CANCEL_URL=http://localhost:8000/cancel
+        EOF
+
+    - name: Run tests
+      run: |
+        python -m pytest tests/ -v
+
+  build-docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: vidzilla/bot
+        tags: |
+          type=ref,event=tag
+          type=raw,value=latest
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  create-release:
+    needs: [test, build-docker]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Extract version from tag
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Generate changelog from commits since last tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -n "$PREVIOUS_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          CHANGELOG=$(git log --pretty=format:"- %s")
+        fi
+        
+        # Save changelog to file
+        cat > RELEASE_CHANGELOG.md << EOF
+        ## What's Changed
+        
+        $CHANGELOG
+        
+        ## Docker Image
+        
+        \`\`\`bash
+        docker pull vidzilla/bot:$VERSION
+        docker pull vidzilla/bot:latest
+        \`\`\`
+        
+        ## Installation
+        
+        \`\`\`bash
+        git clone https://github.com/yourusername/vidzilla.git
+        cd vidzilla
+        git checkout $VERSION
+        cp .env.example .env
+        # Edit .env with your configuration
+        python -m venv .myebv
+        source .myebv/bin/activate
+        pip install -r requirements.txt
+        python bot.py
+        \`\`\`
+        
+        ## Full Changelog
+        
+        **Full Changelog**: https://github.com/yourusername/vidzilla/compare/$PREVIOUS_TAG...$VERSION
+        EOF
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.changelog.outputs.version }}
+        body_path: RELEASE_CHANGELOG.md
+        draft: false
+        prerelease: false
+
+  notify:
+    needs: [create-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Notify on success
+      if: needs.create-release.result == 'success'
+      run: |
+        echo "✅ Release ${{ github.ref }} created successfully!"
+        # Add notification logic here (Slack, Discord, etc.)
+
+    - name: Notify on failure
+      if: needs.create-release.result == 'failure'
+      run: |
+        echo "❌ Release ${{ github.ref }} failed!"
+        # Add notification logic here (Slack, Discord, etc.)

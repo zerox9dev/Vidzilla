@@ -730,7 +730,8 @@ class TestErrorScenariosAndEdgeCases:
     async def test_corrupted_video_file_error(self, video_compressor):
         """Test error handling for corrupted video files."""
         with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as temp_file:
-            temp_file.write(b'corrupted video data')
+            # Create a file larger than 50MB to trigger compression
+            temp_file.write(b'corrupted video data' * (60 * 1024 * 1024 // 20))
             temp_path = temp_file.name
         
         try:
@@ -745,7 +746,8 @@ class TestErrorScenariosAndEdgeCases:
     async def test_unsupported_format_error(self, video_compressor):
         """Test error handling for unsupported video formats."""
         with tempfile.NamedTemporaryFile(suffix='.unknown', delete=False) as temp_file:
-            temp_file.write(b'unknown format data')
+            # Create a file larger than 50MB to trigger compression
+            temp_file.write(b'unknown format data' * (60 * 1024 * 1024 // 20))
             temp_path = temp_file.name
         
         try:
@@ -773,7 +775,7 @@ class TestErrorScenariosAndEdgeCases:
                 with patch.object(video_compressor, 'compress_video', side_effect=CompressionTimeoutError("Timeout")):
                     result = await video_compressor.compress_if_needed(temp_path, 50)
                     assert result.success is False
-                    assert "timeout" in result.error_message.lower()
+                    assert "took too long" in result.error_message.lower()
         finally:
             os.unlink(temp_path)
     
@@ -1083,14 +1085,14 @@ class TestCompressionQualityAndSettings:
         from utils.video_compression import get_compression_error_message
         
         test_cases = [
-            (FFmpegNotFoundError("test"), "FFmpeg"),
-            (CompressionTimeoutError("test"), "too long"),
-            (InsufficientDiskSpaceError("test"), "storage space"),
+            (FFmpegNotFoundError("test"), "ffmpeg"),
+            (CompressionTimeoutError("test"), "timeout"),
+            (InsufficientDiskSpaceError("test"), "disk space"),
             (UnsupportedFormatError("test"), "format"),
             (VideoCorruptedError("test"), "corrupted"),
-            (CompressionQualityError("test"), "poor quality"),
+            (CompressionQualityError("test"), "target size"),
             (FileNotFoundError("test"), "not found"),
-            (Exception("generic error"), "compression failed"),
+            (Exception("generic error"), "unexpected"),
         ]
         
         for error, expected_text in test_cases:

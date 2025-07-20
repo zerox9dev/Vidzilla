@@ -109,6 +109,7 @@ class CompressionStatsTracker:
         self.last_admin_notification = 0
         self.active_compressions = 0
         self.lock = threading.Lock()
+        self._monitoring_started = False
         
         # Start background monitoring if enabled
         if COMPRESSION_MONITORING['enable_compression_stats_tracking']:
@@ -116,6 +117,9 @@ class CompressionStatsTracker:
     
     def _start_background_monitoring(self):
         """Start background thread for system monitoring."""
+        if self._monitoring_started:
+            return
+            
         def monitor_loop():
             while True:
                 try:
@@ -127,6 +131,7 @@ class CompressionStatsTracker:
         
         monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
         monitor_thread.start()
+        self._monitoring_started = True
         compression_logger.info("Started background system monitoring")
     
     def _collect_system_metrics(self):
