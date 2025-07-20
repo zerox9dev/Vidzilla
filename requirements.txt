@@ -10,3 +10,4 @@ aiofiles==24.1.0
 dnspython==2.7.0
 pydantic==2.11.5 
 opencv-python
+ffmpeg-python==0.2.0

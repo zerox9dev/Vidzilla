@@ -4,3 +4,10 @@ __pycache__
 .DS_Store
 test.py
 .myebv
+.kiro
+.pytest_cache
+compression.log
+coverage.log
+coverage.xml
+coverage.html
+coverage.json

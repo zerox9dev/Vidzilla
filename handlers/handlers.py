@@ -137,12 +137,6 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
             return
     except Exception as e:
         await progress_msg.edit_text(f"❌ Error processing video: {str(e)}")
-    else:
-        # Success - remove the progress message
-        try:
-            await progress_msg.delete()
-        except:
-            pass
 
     await state.set_state(DownloadVideo.waiting_for_link)
 
