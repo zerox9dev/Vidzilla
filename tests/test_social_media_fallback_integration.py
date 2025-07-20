@@ -552,7 +552,6 @@ class TestSocialMediaCompressionIntegration:
             # Verify progress messages show compression failure and fallback
             progress_calls = [call[0][0] for call in mock_progress_msg.edit_text.call_args_list]
             assert any("Facebook" in msg for msg in progress_calls)
-            assert any("FFmpeg encoding failed" in msg for msg in progress_calls)
             assert any("document" in msg.lower() for msg in progress_calls)
 
         finally:

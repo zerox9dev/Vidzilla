@@ -14,6 +14,7 @@ import pytest
 from config import COMPRESSION_SETTINGS
 from utils.video_compression import (
     CompressionError,
+    CompressionQualityError,
     CompressionTimeoutError,
     VideoCompressor,
     VideoInfo,
@@ -178,14 +179,17 @@ class TestProgressiveCompressionStrategy:
                 mock_process.communicate = AsyncMock(side_effect=asyncio.TimeoutError())
                 mock_process.kill = MagicMock()
                 mock_process.wait = AsyncMock()
+                mock_process.returncode = None  # Process is still running
+                mock_process.pid = 12345
 
                 with patch("asyncio.create_subprocess_exec", return_value=mock_process):
-                    with pytest.raises(CompressionTimeoutError, match="Compression timeout"):
-                        await video_compressor._attempt_compression(
-                            input_file.name, output_file.name, 28, 1280, 720, 1  # 1 second timeout
-                        )
+                    with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
+                        with pytest.raises(CompressionTimeoutError, match="Compression timeout"):
+                            await video_compressor._attempt_compression(
+                                input_file.name, output_file.name, 28, 1280, 720, 1  # 1 second timeout
+                            )
 
-                    mock_process.kill.assert_called_once()
+                        mock_process.kill.assert_called_once()
 
                 # Clean up
                 os.unlink(input_file.name)
@@ -259,8 +263,14 @@ class TestProgressiveCompressionStrategy:
                         assert attempt_count >= 3
 
                 # Clean up
-                os.unlink(input_file.name)
-                os.unlink(output_file.name)
+                try:
+                    os.unlink(input_file.name)
+                except FileNotFoundError:
+                    pass
+                try:
+                    os.unlink(output_file.name)
+                except FileNotFoundError:
+                    pass
 
     @pytest.mark.asyncio
     async def test_progressive_compression_strategy_all_attempts_fail(
@@ -278,15 +288,20 @@ class TestProgressiveCompressionStrategy:
                     with patch(
                         "utils.video_compression.get_file_size_mb", return_value=60.0
                     ):  # Always too large
-                        result = await video_compressor._progressive_compression_strategy(
-                            input_file.name, output_file.name, 45.0, sample_video_info
-                        )
-
-                        assert result is False
+                        with pytest.raises(CompressionQualityError, match="Unable to compress video to target size"):
+                            await video_compressor._progressive_compression_strategy(
+                                input_file.name, output_file.name, 45.0, sample_video_info
+                            )
 
                 # Clean up
-                os.unlink(input_file.name)
-                os.unlink(output_file.name)
+                try:
+                    os.unlink(input_file.name)
+                except FileNotFoundError:
+                    pass
+                try:
+                    os.unlink(output_file.name)
+                except FileNotFoundError:
+                    pass
 
     @pytest.mark.asyncio
     async def test_progressive_compression_strategy_progress_callback(
