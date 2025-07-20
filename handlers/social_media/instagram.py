@@ -1,15 +1,15 @@
+import glob
 import logging
 import os
 import shutil
 import tempfile
 import uuid
-import glob
 
 import instaloader
 from aiogram.types import FSInputFile
 
-from config import BASE_DIR, TEMP_DIRECTORY, COMPRESSION_SETTINGS, COMPRESSION_MESSAGES
-from utils.video_compression import VideoCompressor, should_compress_video, get_file_size_mb
+from config import BASE_DIR, COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, TEMP_DIRECTORY
+from utils.video_compression import VideoCompressor, get_file_size_mb, should_compress_video
 
 # Remove circular import - define safe_edit_message locally
 

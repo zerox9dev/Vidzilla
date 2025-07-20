@@ -5,34 +5,34 @@ This module tests the monitoring, logging, and metrics tracking functionality
 for the video compression system.
 """
 
-import os
-import time
 import json
-import tempfile
-import unittest
-from unittest.mock import patch, MagicMock, call
+import os
 import sys
+import tempfile
 import threading
+import time
+import unittest
+from unittest.mock import MagicMock, call, patch
 
 # Add the project root to the path so we can import modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils.compression_monitoring import (
     CompressionMetrics,
-    SystemMetrics,
-    CompressionStatsTracker,
     CompressionOperationLogger,
-    log_compression_start,
-    log_compression_result,
-    get_compression_stats,
+    CompressionStatsTracker,
+    SystemMetrics,
     cleanup_old_metrics,
-    export_compression_metrics,
-    log_disk_space_warning,
-    log_compression_timeout,
-    log_ffmpeg_error,
-    log_cleanup_operation,
-    log_performance_metrics,
     compression_logger,
+    export_compression_metrics,
+    get_compression_stats,
+    log_cleanup_operation,
+    log_compression_result,
+    log_compression_start,
+    log_compression_timeout,
+    log_disk_space_warning,
+    log_ffmpeg_error,
+    log_performance_metrics,
 )
 
 

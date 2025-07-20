@@ -5,17 +5,17 @@ This module tests the integration between video compression and monitoring syste
 """
 
 import os
+import sys
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
-import sys
+from unittest.mock import MagicMock, patch
 
 # Add the project root to the path so we can import modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from utils.video_compression import VideoCompressor
-from utils.compression_monitoring import get_compression_stats, stats_tracker
 from config import get_compression_config
+from utils.compression_monitoring import get_compression_stats, stats_tracker
+from utils.video_compression import VideoCompressor
 
 
 class TestVideoCompressionMonitoringIntegration(unittest.TestCase):

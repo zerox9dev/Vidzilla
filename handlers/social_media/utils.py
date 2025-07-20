@@ -1,13 +1,14 @@
 import json
-import requests
+import logging
 import os
 import tempfile
-import logging
-from aiogram.types import URLInputFile, FSInputFile
-from handlers.social_media import instagram
 
-from config import RAPIDAPI_KEY, PLATFORM_IDENTIFIERS, COMPRESSION_SETTINGS, COMPRESSION_MESSAGES
-from utils.video_compression import VideoCompressor, should_compress_video, get_file_size_mb
+import requests
+from aiogram.types import FSInputFile, URLInputFile
+
+from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, PLATFORM_IDENTIFIERS, RAPIDAPI_KEY
+from handlers.social_media import instagram
+from utils.video_compression import VideoCompressor, get_file_size_mb, should_compress_video
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -310,8 +311,9 @@ async def _download_video_to_temp(video_url: str, platform_name: str, user_id: i
         Exception: If download fails
     """
     try:
-        import requests
         import uuid
+
+        import requests
 
         # Create unique temporary file
         temp_dir = COMPRESSION_SETTINGS.get("temp_dir", tempfile.gettempdir())

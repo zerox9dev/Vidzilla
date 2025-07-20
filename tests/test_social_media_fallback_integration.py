@@ -8,20 +8,21 @@ This module tests the complete fallback chain:
 4. Error message with troubleshooting steps
 """
 
-import pytest
 import asyncio
 import os
-import tempfile
 import shutil
-from unittest.mock import AsyncMock, MagicMock, patch, call
-from aiogram.types import Message, Chat, User, FSInputFile
+import tempfile
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
+import pytest
+from aiogram.types import Chat, FSInputFile, Message, User
+
+from config import COMPRESSION_SETTINGS
 from handlers.social_media.utils import (
-    process_social_media_video,
     _attempt_video_delivery_with_fallbacks,
     _download_video_to_temp,
+    process_social_media_video,
 )
-from config import COMPRESSION_SETTINGS
 
 
 class TestSocialMediaFallbackIntegration:

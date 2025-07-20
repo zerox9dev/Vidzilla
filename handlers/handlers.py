@@ -4,16 +4,16 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from config import SUBSCRIPTION_PLANS, REQUIRED_CHANNELS, PLATFORM_IDENTIFIERS
+from config import PLATFORM_IDENTIFIERS, REQUIRED_CHANNELS, SUBSCRIPTION_PLANS
 from handlers.social_media.utils import detect_platform_and_process
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,
+    check_channel_subscription,
+    create_user,
     get_user,
     increment_downloads,
-    create_user,
     update_user_language,
-    check_channel_subscription,
 )
 
 

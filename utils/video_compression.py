@@ -5,29 +5,30 @@ This module provides functionality to compress videos that exceed Telegram's
 50MB file size limit while maintaining acceptable quality.
 """
 
-import os
 import asyncio
 import logging
+import os
 import shutil
-import tempfile
-import psutil
 import signal
+import tempfile
 from dataclasses import dataclass
-from typing import Optional, Callable
-import ffmpeg
 from pathlib import Path
+from typing import Callable, Optional
+
+import ffmpeg
+import psutil
 
 # Import monitoring utilities
 from utils.compression_monitoring import (
     CompressionOperationLogger,
-    log_compression_start,
-    log_compression_result,
-    log_disk_space_warning,
-    log_compression_timeout,
-    log_ffmpeg_error,
-    log_cleanup_operation,
-    log_performance_metrics,
     compression_logger,
+    log_cleanup_operation,
+    log_compression_result,
+    log_compression_start,
+    log_compression_timeout,
+    log_disk_space_warning,
+    log_ffmpeg_error,
+    log_performance_metrics,
 )
 
 logger = logging.getLogger(__name__)

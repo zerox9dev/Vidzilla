@@ -4,20 +4,21 @@ Unit tests for video size checking and compression decision logic.
 Tests for task 3.1: Create file size detection system
 """
 
+import asyncio
 import os
 import tempfile
-import pytest
-import asyncio
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from utils.video_compression import (
-    check_video_size_against_limit,
-    should_compress_video,
-    get_file_size_mb,
-    VideoCompressor,
-    create_compression_result,
-)
+import pytest
+
 from config import COMPRESSION_SETTINGS
+from utils.video_compression import (
+    VideoCompressor,
+    check_video_size_against_limit,
+    create_compression_result,
+    get_file_size_mb,
+    should_compress_video,
+)
 
 
 class TestFileSizeDetection:

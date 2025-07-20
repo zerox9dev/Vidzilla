@@ -4,19 +4,20 @@ Unit tests for progressive compression strategy.
 Tests for task 3.2: Implement progressive compression strategy
 """
 
+import asyncio
 import os
 import tempfile
-import pytest
-import asyncio
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from config import COMPRESSION_SETTINGS
 from utils.video_compression import (
-    VideoCompressor,
-    VideoInfo,
     CompressionError,
     CompressionTimeoutError,
+    VideoCompressor,
+    VideoInfo,
 )
-from config import COMPRESSION_SETTINGS
 
 
 def safe_cleanup(*file_paths):

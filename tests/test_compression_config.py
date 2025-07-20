@@ -6,10 +6,10 @@ for the video compression system.
 """
 
 import os
+import sys
 import tempfile
 import unittest
-from unittest.mock import patch, MagicMock
-import sys
+from unittest.mock import MagicMock, patch
 
 # Add the project root to the path so we can import config
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

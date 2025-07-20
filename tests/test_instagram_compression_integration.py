@@ -8,12 +8,13 @@ including progress message updates and error handling scenarios.
 import asyncio
 import os
 import tempfile
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
 import pytest
 
+from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS
 from handlers.social_media.instagram import process_instagram
-from utils.video_compression import VideoCompressor, CompressionResult
-from config import COMPRESSION_SETTINGS, COMPRESSION_MESSAGES
+from utils.video_compression import CompressionResult, VideoCompressor
 
 
 class TestInstagramCompressionIntegration:

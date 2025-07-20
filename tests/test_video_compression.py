@@ -2,22 +2,24 @@
 Unit tests for video compression utilities.
 """
 
-import pytest
 import asyncio
 import os
-import tempfile
 import shutil
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from utils.video_compression import (
-    get_video_info,
-    VideoInfo,
+    CompressionQualityError,
+    CompressionTimeoutError,
+    FFmpegNotFoundError,
+    InsufficientDiskSpaceError,
+    UnsupportedFormatError,
     VideoCompressor,
     VideoCorruptedError,
-    UnsupportedFormatError,
-    FFmpegNotFoundError,
-    CompressionTimeoutError,
-    InsufficientDiskSpaceError,
-    CompressionQualityError,
+    VideoInfo,
+    get_video_info,
 )
 
 
@@ -447,7 +449,7 @@ class TestCompressionResultHandling:
 
     def test_create_temp_file(self):
         """Test temporary file creation."""
-        from utils.video_compression import create_temp_file, cleanup_temp_files
+        from utils.video_compression import cleanup_temp_files, create_temp_file
 
         # Create temp file
         temp_path = create_temp_file()
@@ -472,9 +474,9 @@ class TestCompressionResultHandling:
     def test_create_compression_result_success(self, temp_video_file):
         """Test compression result creation for successful compression."""
         from utils.video_compression import (
+            cleanup_temp_files,
             create_compression_result,
             create_temp_file,
-            cleanup_temp_files,
         )
 
         # Create a compressed file
@@ -961,8 +963,9 @@ class TestPerformanceAndTimeLimits:
     @pytest.mark.asyncio
     async def test_memory_usage_with_large_files(self, video_compressor):
         """Test memory usage doesn't grow excessively with large files."""
-        import psutil
         import gc
+
+        import psutil
 
         process = psutil.Process()
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

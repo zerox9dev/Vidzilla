@@ -5,19 +5,20 @@ This module provides comprehensive monitoring, logging, and metrics tracking
 for the video compression system.
 """
 
-import os
-import time
+import asyncio
 import json
 import logging
-import asyncio
+import os
 import threading
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Any
+import time
 from collections import defaultdict, deque
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import psutil
 
-from config import COMPRESSION_MONITORING, ADMIN_IDS
+from config import ADMIN_IDS, COMPRESSION_MONITORING
 
 
 # Configure compression-specific logger
@@ -177,8 +178,8 @@ class CompressionStatsTracker:
     def _get_temp_directory_size(self) -> float:
         """Calculate total size of temporary directory in MB."""
         try:
-            from utils.video_compression import get_directory_size_mb
             from config import COMPRESSION_SETTINGS
+            from utils.video_compression import get_directory_size_mb
 
             return get_directory_size_mb(COMPRESSION_SETTINGS["temp_dir"])
         except Exception as e:
