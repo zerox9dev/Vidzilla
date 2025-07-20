@@ -20,14 +20,12 @@ async def send_message_to_user(bot: Bot, user_id: int, message: str):
 
 
 async def handle_stripe_webhook(request):
-    bot = request.app['bot']
+    bot = request.app["bot"]
     payload = await request.text()
-    sig_header = request.headers.get('Stripe-Signature')
+    sig_header = request.headers.get("Stripe-Signature")
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, STRIPE_WEBHOOK_SECRET
-        )
+        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
     except ValueError as e:
         logger.error(f"Error parsing payload: {str(e)}")
         return web.Response(status=400)
@@ -35,33 +33,32 @@ async def handle_stripe_webhook(request):
         logger.error(f"Error verifying webhook signature: {str(e)}")
         return web.Response(status=400)
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
 
-        session_with_expand = stripe.checkout.Session.retrieve(
-            session.id, expand=['customer']
-        )
+        session_with_expand = stripe.checkout.Session.retrieve(session.id, expand=["customer"])
         user_id = int(session_with_expand.client_reference_id)
-        plan = '1month'  # Always 1month plan
+        plan = "1month"  # Always 1month plan
 
         if user_id:
             success = await update_subscription(user_id, plan)
             if success:
                 logger.info(f"Subscription activated for user {user_id}")
                 end_date = datetime.now() + timedelta(days=30)
-                message = (f"Thank you for your subscription! Your access has been activated. "
-                           f"Your subscription is valid until {end_date.strftime('%Y-%m-%d')}. "
-                           f"You can now send me a link to download a video.")
+                message = (
+                    f"Thank you for your subscription! Your access has been activated. "
+                    f"Your subscription is valid until {end_date.strftime('%Y-%m-%d')}. "
+                    f"You can now send me a link to download a video."
+                )
                 await send_message_to_user(bot, user_id, message)
             else:
-                logger.error(
-                    f"Error activating subscription for user {user_id}")
+                logger.error(f"Error activating subscription for user {user_id}")
                 message = "There was an error activating your subscription. Please contact support."
                 await send_message_to_user(bot, user_id, message)
         else:
             logger.error(f"Missing user_id in session {session.id}")
-    elif event['type'] == 'checkout.session.expired':
-        session = event['data']['object']
+    elif event["type"] == "checkout.session.expired":
+        session = event["data"]["object"]
         user_id = int(session.client_reference_id)
         message = "Your payment session has expired. Please try again or contact support if you need assistance."
         await send_message_to_user(bot, user_id, message)
@@ -72,4 +69,4 @@ async def handle_stripe_webhook(request):
 
 
 def setup_stripe_webhook(app):
-    app.router.add_post('/stripe-webhook', handle_stripe_webhook)
+    app.router.add_post("/stripe-webhook", handle_stripe_webhook)

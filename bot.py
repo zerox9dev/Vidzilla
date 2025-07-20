@@ -22,7 +22,7 @@ async def handle_webhook_get(request):
 
 
 async def on_startup(app):
-    bot = app['bot']
+    bot = app["bot"]
     webhook_url = WEBHOOK_URL + WEBHOOK_PATH
     logging.info(f"Setting webhook to {webhook_url}")
     await bot.set_webhook(webhook_url)
@@ -30,7 +30,7 @@ async def on_startup(app):
 
 
 async def on_shutdown(app):
-    bot = app['bot']
+    bot = app["bot"]
     logging.info("Closing bot session")
     await bot.session.close()
     logging.info("Bot session closed")
@@ -55,7 +55,7 @@ async def create_app():
     register_admin_handlers(dp)
 
     app = web.Application()
-    app['bot'] = bot
+    app["bot"] = bot
 
     webhook_handler = SimpleRequestHandler(
         dispatcher=dp,
@@ -66,7 +66,7 @@ async def create_app():
 
     setup_stripe_webhook(app)
 
-    app.router.add_route('*', '/', handle_root)
+    app.router.add_route("*", "/", handle_root)
     app.router.add_get(WEBHOOK_PATH, handle_webhook_get)
 
     app.on_startup.append(on_startup)
@@ -79,7 +79,7 @@ async def main():
     app = await create_app()
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8000)
+    site = web.TCPSite(runner, "0.0.0.0", 8000)
 
     logging.info("Starting web application")
     await site.start()
@@ -94,7 +94,8 @@ async def main():
         await runner.cleanup()
         logging.info("Cleanup complete. Exiting.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logging.info("Starting bot")
     try:
         asyncio.run(main())
