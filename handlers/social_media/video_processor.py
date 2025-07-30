@@ -295,21 +295,8 @@ async def process_video_with_ytdlp(message, bot, url, platform_name, progress_ms
 
     except Exception as e:
         logger.error(f"Error processing {platform_name} video: {str(e)}")
-
-        # Error handling
-        if "unavailable" in str(e).lower() or "private" in str(e).lower():
-            error_message = f"❌ {platform_name} video is unavailable or private"
-        elif "not supported" in str(e).lower():
-            error_message = f"❌ {platform_name} platform is not supported yet"
-        elif "age" in str(e).lower() and "restricted" in str(e).lower():
-            error_message = f"❌ {platform_name} video is age-restricted"
-        else:
-            error_message = f"❌ Error downloading {platform_name} video: {str(e)}"
-
-        if progress_msg:
-            await safe_edit_message(progress_msg, error_message, platform_name)
-        else:
-            await bot.send_message(message.chat.id, error_message)
+        # Re-raise the exception to be handled by the retry logic
+        raise
 
     finally:
         # Clean up temporary file
@@ -386,6 +373,7 @@ async def _send_video_with_fallbacks(
 async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):
     """
     Generic function to process videos from social media platforms with compression support
+    Includes retry logic with up to 3 attempts
 
     Args:
         message: User message object
@@ -394,19 +382,58 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         platform_name: Name of the platform (Facebook, Twitter, TikTok, etc.)
         progress_msg: Message object for progress updates
     """
-    try:
-        if progress_msg:
-            await safe_edit_message(
-                progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
-            )
+    max_attempts = 3
+    last_error = None
 
-        # Use yt-dlp for video downloading
-        await process_video_with_ytdlp(message, bot, url, platform_name, progress_msg)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            if progress_msg:
+                if attempt == 1:
+                    await safe_edit_message(
+                        progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
+                    )
+                else:
+                    await safe_edit_message(
+                        progress_msg, f"⏳ Retrying {platform_name} link... (Attempt {attempt}/3)", platform_name
+                    )
 
-    except Exception as e:
-        logger.error(f"Error processing {platform_name} video: {str(e)}")
-        # Re-raise the exception to be handled by the ytdlp_handler
-        raise
+            # Use yt-dlp for video downloading
+            await process_video_with_ytdlp(message, bot, url, platform_name, progress_msg)
+            return  # Success, exit the retry loop
+
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Attempt {attempt}/{max_attempts} failed for {platform_name} video: {str(e)}")
+
+            # If this was the last attempt, handle the final error
+            if attempt == max_attempts:
+                logger.error(f"All {max_attempts} attempts failed for {platform_name} video: {str(e)}")
+
+                # Enhanced error handling with retry failure message
+                error_message = ""
+                if "unavailable" in str(e).lower() or "private" in str(e).lower():
+                    error_message = f"❌ {platform_name} video is unavailable or private"
+                elif "not supported" in str(e).lower():
+                    error_message = f"❌ {platform_name} platform is not supported yet"
+                elif "age" in str(e).lower() and "restricted" in str(e).lower():
+                    error_message = f"❌ {platform_name} video is age-restricted"
+                elif "network" in str(e).lower() or "timeout" in str(e).lower() or "connection" in str(e).lower():
+                    error_message = f"❌ Network error downloading {platform_name} video after {max_attempts} attempts. Please check your internet connection and try again."
+                else:
+                    error_message = f"❌ Failed to download {platform_name} video after {max_attempts} attempts.\n💡 Try:\n• Using a different URL format\n• Checking if the video is still available\n• Trying again later"
+
+                if progress_msg:
+                    await safe_edit_message(progress_msg, error_message, platform_name)
+                else:
+                    await bot.send_message(message.chat.id, error_message)
+
+                # Re-raise the exception for any upstream handling
+                raise
+
+            # Wait a bit before retrying (exponential backoff)
+            wait_time = 2 ** attempt  # 2, 4, 8 seconds
+            logger.info(f"Waiting {wait_time} seconds before retry...")
+            await asyncio.sleep(wait_time)
 
 
 async def detect_platform_and_process(message, bot, url, progress_msg=None):
@@ -425,10 +452,6 @@ async def detect_platform_and_process(message, bot, url, progress_msg=None):
     # Process all platforms through the common ytdlp method
     for domain, platform_name in PLATFORM_IDENTIFIERS.items():
         if domain in url:
-            if progress_msg:
-                await safe_edit_message(
-                    progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
-                )
             await process_social_media_video(message, bot, url, platform_name, progress_msg)
             return True
 
