@@ -10,6 +10,7 @@ from aiogram.types import FSInputFile
 
 from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, TEMP_DIRECTORY, PLATFORM_IDENTIFIERS
 from utils.video_compression import VideoCompressor, get_file_size_mb, should_compress_video
+from utils.user_agent_utils import get_http_headers_with_user_agent
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -78,25 +79,28 @@ class YTDLPHandler:
             options.update({
                 'format': 'best[height<=1080][ext=mp4]/best[height<=1080]/best[ext=mp4]/best',
                 'merge_output_format': 'mp4',
+                'http_headers': get_http_headers_with_user_agent('YouTube')
             })
         elif 'tiktok' in platform_name.lower():
             options.update({
                 'format': 'best[ext=mp4]/best',
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
+                'http_headers': get_http_headers_with_user_agent('TikTok')
             })
         elif 'twitter' in platform_name.lower() or 'x.com' in platform_name.lower():
             options.update({
                 'format': 'best[ext=mp4]/best',
+                'http_headers': get_http_headers_with_user_agent('Twitter')
             })
         elif 'instagram' in platform_name.lower():
             options.update({
                 'format': 'best[ext=mp4]/best',
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                },
+                'http_headers': get_http_headers_with_user_agent('Instagram'),
                 'cookiefile': None,  # Don't use cookies for Instagram
+            })
+        else:
+            # For other platforms, add a generic fake user agent to improve success rate
+            options.update({
+                'http_headers': get_http_headers_with_user_agent(platform_name)
             })
 
         return options
