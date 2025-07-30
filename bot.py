@@ -79,7 +79,7 @@ async def main():
     app = await create_app()
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8005)
+    site = web.TCPSite(runner, "0.0.0.0", 8000)
 
     logging.info("Starting web application")
     await site.start()
