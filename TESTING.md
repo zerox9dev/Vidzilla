@@ -130,7 +130,7 @@ Tests use these environment variables (automatically set):
 
 ```env
 BOT_TOKEN=test_token
-RAPIDAPI_KEY=test_key
+
 MONGODB_URI=mongodb://localhost:27017/test
 ADMIN_IDS=123456789
 ```

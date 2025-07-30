@@ -49,7 +49,7 @@ jobs:
       run: |
         cat > .env << EOF
         BOT_TOKEN=test_token_${{ github.run_id }}
-        RAPIDAPI_KEY=test_key_${{ github.run_id }}
+
         WEBHOOK_PATH=/webhook
         WEBHOOK_URL=http://localhost:8000
         BOT_USERNAME=test_bot

@@ -199,7 +199,7 @@ COMPRESSION_MAX_ATTEMPTS=3    # Max compression attempts
 COMPRESSION_TIMEOUT_SECONDS=300 # Compression timeout
 
 # External APIs
-RAPIDAPI_KEY=                 # RapidAPI key for some platforms
+
 STRIPE_SECRET_KEY=            # Stripe secret key (optional)
 ```
 
@@ -381,7 +381,7 @@ graph LR
     Bot[Vidzilla Bot] --> MongoDB[(MongoDB)]
     Bot --> FFmpeg[FFmpeg]
     Bot --> TelegramAPI[Telegram API]
-    Bot --> RapidAPI[RapidAPI]
+    Bot --> YTDLP[yt-dlp]
     Bot --> Stripe[Stripe API]
 
     MongoDB --> MongoAtlas[MongoDB Atlas]
@@ -421,7 +421,7 @@ class VideoCache:
 
 ### External APIs / Внешние API
 - **Telegram Bot API** - Core bot functionality
-- **RapidAPI** - Video extraction for some platforms
+- **yt-dlp** - Free video extraction for 1000+ platforms
 - **Stripe API** - Payment processing
 - **MongoDB Atlas** - Database hosting
 

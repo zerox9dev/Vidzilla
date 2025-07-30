@@ -32,7 +32,7 @@ jobs:
       run: |
         cat > .env << EOF
         BOT_TOKEN=test_token_release
-        RAPIDAPI_KEY=test_key_release
+
         WEBHOOK_PATH=/webhook
         WEBHOOK_URL=http://localhost:8000
         BOT_USERNAME=test_bot

@@ -6,7 +6,8 @@ import tempfile
 import requests
 from aiogram.types import FSInputFile, URLInputFile
 
-from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, PLATFORM_IDENTIFIERS, RAPIDAPI_KEY
+from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, PLATFORM_IDENTIFIERS
+from handlers.social_media.ytdlp_handler import process_video_with_ytdlp
 from handlers.social_media import instagram
 from utils.video_compression import VideoCompressor, get_file_size_mb, should_compress_video
 
@@ -64,23 +65,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
                 progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
             )
 
-        api_url = "https://auto-download-all-in-one.p.rapidapi.com/v1/social/autolink"
-        payload = {"url": url}
-        headers = {
-            "x-rapidapi-key": RAPIDAPI_KEY,
-            "x-rapidapi-host": "auto-download-all-in-one.p.rapidapi.com",
-            "Content-Type": "application/json",
-        }
+        # Use yt-dlp for video downloading
+        await process_video_with_ytdlp(message, bot, url, platform_name, progress_msg)
+        return  # Early return since yt-dlp handles everything
 
-        response = requests.post(api_url, json=payload, headers=headers)
-        data = response.json()
-
-        if progress_msg:
-            await safe_edit_message(
-                progress_msg, f"⏳ Processing {platform_name} link... 50%", platform_name
-            )
-
-        if response.status_code == 200 and "medias" in data and len(data["medias"]) > 0:
+        # The code below is kept for reference but won't be executed
+        if False:
             video_url = data["medias"][0]["url"]
 
             if progress_msg:

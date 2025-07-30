@@ -14,7 +14,7 @@
 
 ### External Services / Внешние сервисы
 - **Telegram Bot Token** (от @BotFather)
-- **RapidAPI Key** (для некоторых платформ)
+
 - **MongoDB Atlas** или локальная установка
 - **Stripe Account** (для платежей, опционально)
 
@@ -120,7 +120,7 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=tru
 MONGODB_DB_NAME=video_downloader_bot
 
 # API Keys
-RAPIDAPI_KEY=your_rapidapi_key_here
+
 
 # Admin Settings
 ADMIN_IDS=123456789,987654321

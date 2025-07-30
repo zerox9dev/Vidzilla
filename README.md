@@ -212,7 +212,7 @@ A: This ensures Telegram compatibility. Original quality is preserved in documen
 - **MongoDB** - Database for user data and statistics
 - **FFmpeg** - Video processing and compression
 - **Telegram Bot Token** - From @BotFather
-- **RapidAPI Key** - For multi-platform video downloading
+- **yt-dlp** - For multi-platform video downloading
 - **Stripe Account** - Optional, for donation processing
 
 ### Quick Installation
@@ -258,7 +258,7 @@ A: This ensures Telegram compatibility. Original quality is preserved in documen
 ```env
 # Bot essentials
 BOT_TOKEN=your_telegram_bot_token
-RAPIDAPI_KEY=your_rapidapi_key
+
 MONGODB_URI=your_mongodb_connection_string
 ADMIN_IDS=your_telegram_user_id
 
@@ -332,7 +332,7 @@ WantedBy=multi-user.target
 
 #### Core Components
 - **Video Compression Engine** - Intelligent size optimization with FFmpeg
-- **Multi-Platform Support** - 40+ platforms via RapidAPI + Instagram direct
+- **Multi-Platform Support** - 40+ platforms via yt-dlp + Instagram direct
 - **Progress Tracking** - Real-time compression and download progress
 - **Admin Dashboard** - Statistics, user management, broadcast messaging
 - **Monitoring System** - Performance metrics, error tracking, disk usage
@@ -508,7 +508,7 @@ Vidzilla тепер підтримує понад 40 платформ, вклю�
 - Python 3.11+
 - База даних MongoDB
 - Токен бота Telegram
-- Ключ RapidAPI (для TikTok, YouTube, Facebook, Twitter, Pinterest)
+
 - Обліковий запис Stripe (для пожертвувань)
 
 ### Встановлення
@@ -530,7 +530,7 @@ Vidzilla тепер підтримує понад 40 платформ, вклю�
    ```
    # Конфігурація бота
    BOT_TOKEN=your_telegram_bot_token
-   RAPIDAPI_KEY=your_rapidapi_key
+
    WEBHOOK_PATH='/webhook'
    WEBHOOK_URL=your_webhook_url
    BOT_USERNAME=your_bot_username
@@ -586,7 +586,7 @@ Vidzilla тепер підтримує понад 40 платформ, вклю�
 ## 📊 Деталі реалізації
 
 - **Instagram**: Використовує бібліотеку Instaloader для прямих завантажень
-- **Інші платформи**: Використовує API "auto-download-all-in-one" від RapidAPI
+- **Інші платформи**: Використовує yt-dlp для завантаження з 1000+ сайтів
 - **База даних**: MongoDB для даних користувачів та управління купонами
 - **Платежі**: Stripe для обробки пожертвувань
 
@@ -655,7 +655,7 @@ Vidzilla теперь поддерживает более 40 платформ, �
 - Python 3.11+
 - База даних MongoDB
 - Токен бота Telegram
-- Ключ RapidAPI (для TikTok, YouTube, Facebook, Twitter, Pinterest)
+
 - Обліковий запис Stripe (для пожертвувань)
 
 ### Встановлення
@@ -677,7 +677,7 @@ Vidzilla теперь поддерживает более 40 платформ, �
    ```
    # Конфігурація бота
    BOT_TOKEN=your_telegram_bot_token
-   RAPIDAPI_KEY=your_rapidapi_key
+
    WEBHOOK_PATH='/webhook'
    WEBHOOK_URL=your_webhook_url
    BOT_USERNAME=your_bot_username
@@ -733,7 +733,7 @@ Vidzilla теперь поддерживает более 40 платформ, �
 ## 📊 Деталі реалізації
 
 - **Instagram**: Використовує бібліотеку Instaloader для прямих завантажень
-- **Інші платформи**: Використовує API "auto-download-all-in-one" від RapidAPI
+- **Інші платформи**: Використовує yt-dlp для завантаження з 1000+ сайтів
 - **База даних**: MongoDB для даних користувачів та управління купонами
 - **Платежі**: Stripe для обробки пожертвувань
 
@@ -809,7 +809,7 @@ Vidzilla 现在支持超过 40 个平台，包括：
 - Python 3.11+
 - MongoDB 数据库
 - Telegram 机器人令牌
-- RapidAPI 密钥（用于 TikTok、YouTube、Facebook、Twitter、Pinterest）
+
 - Stripe 账户（用于捐款）
 
 ### 安装
@@ -831,7 +831,7 @@ Vidzilla 现在支持超过 40 个平台，包括：
    ```
    # 机器人配置
    BOT_TOKEN=your_telegram_bot_token
-   RAPIDAPI_KEY=your_rapidapi_key
+
    WEBHOOK_PATH='/webhook'
    WEBHOOK_URL=your_webhook_url
    BOT_USERNAME=your_bot_username
@@ -887,7 +887,7 @@ Vidzilla 现在支持超过 40 个平台，包括：
 ## 📊 实现细节
 
 - **Instagram**：使用 Instaloader 库进行直接下载
-- **其他平台**：使用 RapidAPI 的 "auto-download-all-in-one" API
+- **其他平台**：使用 yt-dlp 从 1000+ 网站下载
 - **数据库**：MongoDB 用于用户数据和优惠券管理
 - **付款**：Stripe 用于捐款处理
 
@@ -998,7 +998,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Telegram Bot API** - For the excellent bot platform
-- **RapidAPI** - For multi-platform video download APIs
+- **yt-dlp** - For free multi-platform video downloading
 - **FFmpeg Team** - For the powerful video processing library
 - **Open Source Community** - For the amazing Python libraries
 
