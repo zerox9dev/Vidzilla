@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
-from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL
+from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
 from handlers.admin import register_admin_handlers
 from handlers.handlers import register_handlers
 from utils.stripe_webhook_handler import setup_stripe_webhook
@@ -79,9 +79,9 @@ async def main():
     app = await create_app()
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8000)
+    site = web.TCPSite(runner, HOST, PORT)
 
-    logging.info("Starting web application")
+    logging.info(f"Starting web application on {HOST}:{PORT}")
     await site.start()
 
     try:

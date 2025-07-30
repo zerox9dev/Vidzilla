@@ -262,6 +262,10 @@ BOT_TOKEN=your_telegram_bot_token
 MONGODB_URI=your_mongodb_connection_string
 ADMIN_IDS=your_telegram_user_id
 
+# Server configuration
+PORT=8005                               # Server port (default: 8005)
+HOST=0.0.0.0                           # Server host (default: 0.0.0.0)
+
 # Bot identity
 BOT_USERNAME=your_bot_username
 WEBHOOK_URL=your_webhook_url  # For production
