@@ -341,26 +341,26 @@ async def _send_video_with_fallbacks(
     except Exception as video_error:
         logger.warning(f"Failed to send as video: {video_error}")
 
-        try:
-            # Fallback: send as document
-            file_name = f"{platform_name.lower()}_video_{message.from_user.id}.mp4"
-            doc_file = FSInputFile(video_path, filename=file_name)
+    # Always send as document too (like Instagram does)
+    try:
+        file_name = f"{platform_name.lower()}_video_{message.from_user.id}.mp4"
+        doc_file = FSInputFile(video_path, filename=file_name)
 
-            caption = f"📁 {platform_name} Video"
-            if video_title:
-                caption += f" - {video_title}"
+        caption = f"📁 {platform_name} Video"
+        if video_title:
+            caption += f" - {video_title}"
 
-            await bot.send_document(
-                chat_id=message.chat.id,
-                document=doc_file,
-                caption=caption[:1024],
-                disable_content_type_detection=True
-            )
-            logger.info(f"Video sent as document fallback")
+        await bot.send_document(
+            chat_id=message.chat.id,
+            document=doc_file,
+            caption=caption[:1024],
+            disable_content_type_detection=True
+        )
+        logger.info(f"Video sent as document")
 
-        except Exception as doc_error:
-            logger.error(f"Failed to send as document: {doc_error}")
-            raise Exception(f"Failed to send video: {doc_error}")
+    except Exception as doc_error:
+        logger.error(f"Failed to send as document: {doc_error}")
+        # Don't raise exception here - video was already sent successfully
 
     # Final success message
     if progress_msg:
