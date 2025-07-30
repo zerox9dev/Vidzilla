@@ -410,7 +410,7 @@ COMPRESSION_QUALITY_LEVELS=32,36,40
 #### Video Processing
 - **ffmpeg-python 0.2.0** - Python FFmpeg wrapper
 - **opencv-python** - Video analysis and processing
-- **instaloader 4.14.1** - Instagram direct downloads
+- **yt-dlp** - Universal video downloader for 1000+ platforms
 
 #### Utilities
 - **python-dotenv 1.1.0** - Environment management
@@ -584,13 +584,13 @@ Vidzilla тепер підтримує понад 40 платформ, вклю�
 - `python-dotenv` - Управління змінними середовища
 - `pymongo` - Драйвер MongoDB
 - `requests` - Бібліотека HTTP-запитів
-- `instaloader` - Завантажувач контенту Instagram
+- `yt-dlp` - Універсальний завантажувач відео з 1000+ платформ
 - `stripe` - Обробка платежів
 
 ## 📊 Деталі реалізації
 
-- **Instagram**: Використовує бібліотеку Instaloader для прямих завантажень
-- **Інші платформи**: Використовує yt-dlp для завантаження з 1000+ сайтів
+- **Всі платформи**: Використовує yt-dlp для універсального завантаження з 1000+ сайтів включно з Instagram
+
 - **База даних**: MongoDB для даних користувачів та управління купонами
 - **Платежі**: Stripe для обробки пожертвувань
 
@@ -731,13 +731,13 @@ Vidzilla теперь поддерживает более 40 платформ, �
 - `python-dotenv` - Управління змінними середовища
 - `pymongo` - Драйвер MongoDB
 - `requests` - Бібліотека HTTP-запитів
-- `instaloader` - Завантажувач контенту Instagram
+- `yt-dlp` - Універсальний завантажувач відео з 1000+ платформ
 - `stripe` - Обробка платежів
 
 ## 📊 Деталі реалізації
 
-- **Instagram**: Використовує бібліотеку Instaloader для прямих завантажень
-- **Інші платформи**: Використовує yt-dlp для завантаження з 1000+ сайтів
+- **Всі платформи**: Використовує yt-dlp для універсального завантаження з 1000+ сайтів включно з Instagram
+
 - **База даних**: MongoDB для даних користувачів та управління купонами
 - **Платежі**: Stripe для обробки пожертвувань
 
@@ -885,13 +885,13 @@ Vidzilla 现在支持超过 40 个平台，包括：
 - `python-dotenv` - 环境变量管理
 - `pymongo` - MongoDB 驱动程序
 - `requests` - HTTP 请求库
-- `instaloader` - Instagram 内容下载器
+- `yt-dlp` - 支持 1000+ 平台的通用视频下载器
 - `stripe` - 付款处理
 
 ## 📊 实现细节
 
-- **Instagram**：使用 Instaloader 库进行直接下载
-- **其他平台**：使用 yt-dlp 从 1000+ 网站下载
+- **所有平台**：使用 yt-dlp 从 1000+ 网站（包括 Instagram）进行通用下载
+
 - **数据库**：MongoDB 用于用户数据和优惠券管理
 - **付款**：Stripe 用于捐款处理
 
@@ -995,7 +995,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Third-Party Licenses
 - **FFmpeg** - LGPL/GPL (depending on build)
-- **Instaloader** - MIT License
+
 - **aiogram** - MIT License
 - **MongoDB** - Server Side Public License
 

@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config import PLATFORM_IDENTIFIERS, REQUIRED_CHANNELS, SUBSCRIPTION_PLANS
-from handlers.social_media.utils import detect_platform_and_process
+from handlers.social_media.video_processor import detect_platform_and_process
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,

@@ -8,7 +8,7 @@ from typing import Optional
 import yt_dlp
 from aiogram.types import FSInputFile
 
-from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, TEMP_DIRECTORY
+from config import COMPRESSION_MESSAGES, COMPRESSION_SETTINGS, TEMP_DIRECTORY, PLATFORM_IDENTIFIERS
 from utils.video_compression import VideoCompressor, get_file_size_mb, should_compress_video
 
 # Set up logging
@@ -46,6 +46,8 @@ async def safe_edit_message(progress_msg, new_text: str, platform_name: str = ""
             logger.warning(f"Failed to edit progress message for {platform_name}: {e}")
 
 
+
+
 class YTDLPHandler:
     """Handler for downloading videos using yt-dlp"""
 
@@ -68,7 +70,6 @@ class YTDLPHandler:
             'extractaudio': False,
             'audioformat': 'mp3',
             'embed_subs': False,
-            'writesubtitles': False,
             'allsubtitles': False,
         }
 
@@ -88,6 +89,14 @@ class YTDLPHandler:
         elif 'twitter' in platform_name.lower() or 'x.com' in platform_name.lower():
             options.update({
                 'format': 'best[ext=mp4]/best',
+            })
+        elif 'instagram' in platform_name.lower():
+            options.update({
+                'format': 'best[ext=mp4]/best',
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                },
+                'cookiefile': None,  # Don't use cookies for Instagram
             })
 
         return options
@@ -371,3 +380,56 @@ async def _send_video_with_fallbacks(
             success_text = f"✅ {platform_name} video processed successfully!\n📊 Size: {final_size_mb:.1f}MB"
 
         await safe_edit_message(progress_msg, success_text, platform_name)
+
+
+# Main entry point functions for external usage
+async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):
+    """
+    Generic function to process videos from social media platforms with compression support
+
+    Args:
+        message: User message object
+        bot: Bot instance
+        url: Social media URL to process
+        platform_name: Name of the platform (Facebook, Twitter, TikTok, etc.)
+        progress_msg: Message object for progress updates
+    """
+    try:
+        if progress_msg:
+            await safe_edit_message(
+                progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
+            )
+
+        # Use yt-dlp for video downloading
+        await process_video_with_ytdlp(message, bot, url, platform_name, progress_msg)
+
+    except Exception as e:
+        logger.error(f"Error processing {platform_name} video: {str(e)}")
+        # Re-raise the exception to be handled by the ytdlp_handler
+        raise
+
+
+async def detect_platform_and_process(message, bot, url, progress_msg=None):
+    """
+    Detects social media platform type from URL and processes the video
+
+    Args:
+        message: User message object
+        bot: Bot instance
+        url: Social media URL to process
+        progress_msg: Message object for progress updates
+
+    Returns:
+        bool: True if platform was detected and processed, False if not supported
+    """
+    # Process all platforms through the common ytdlp method
+    for domain, platform_name in PLATFORM_IDENTIFIERS.items():
+        if domain in url:
+            if progress_msg:
+                await safe_edit_message(
+                    progress_msg, f"⏳ Processing {platform_name} link... 25%", platform_name
+                )
+            await process_social_media_video(message, bot, url, platform_name, progress_msg)
+            return True
+
+    return False

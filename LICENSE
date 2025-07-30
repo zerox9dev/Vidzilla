@@ -31,11 +31,6 @@ This project uses the following third-party libraries:
 - Website: https://ffmpeg.org/legal.html
 - Used for: Video processing and compression
 
-### Instaloader
-- License: MIT License
-- Repository: https://github.com/instaloader/instaloader
-- Used for: Instagram content downloading
-
 ### aiogram
 - License: MIT License
 - Repository: https://github.com/aiogram/aiogram
