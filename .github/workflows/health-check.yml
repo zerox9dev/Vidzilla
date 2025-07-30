@@ -42,11 +42,9 @@ jobs:
         required_files=(
           "README.md"
           "requirements.txt"
-          "Dockerfile"
-          "docker-compose.yml"
           "LICENSE"
         )
-        
+
         for file in "${required_files[@]}"; do
           if [ ! -f "$file" ]; then
             echo "❌ Required file missing: $file"
@@ -55,19 +53,14 @@ jobs:
         done
         echo "✅ All required files present"
 
-    - name: Check Docker build context
-      run: |
-        if [ ! -f .dockerignore ]; then
-          echo "⚠️ .dockerignore not found"
-        fi
-        echo "✅ Docker context check complete"
+
 
     - name: Project structure validation
       run: |
         echo "📁 Project structure:"
         find . -type f -name "*.py" | head -10
         echo "✅ Python files found"
-        
+
         if [ -d "handlers" ] && [ -d "utils" ] && [ -d "tests" ]; then
           echo "✅ Core directories present"
         else

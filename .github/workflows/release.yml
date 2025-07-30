@@ -53,40 +53,10 @@ jobs:
       run: |
         python -m pytest tests/test_compression_config.py tests/test_size_checking.py -v --tb=short
 
-  build-docker:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: vidzilla/bot
-        tags: |
-          type=ref,event=tag
-          type=raw,value=latest
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
 
   create-release:
-    needs: [test, build-docker]
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -99,7 +69,7 @@ jobs:
         # Extract version from tag
         VERSION=${GITHUB_REF#refs/tags/}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        
+
         # Generate changelog from commits since last tag
         PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
         if [ -n "$PREVIOUS_TAG" ]; then
@@ -107,22 +77,17 @@ jobs:
         else
           CHANGELOG=$(git log --pretty=format:"- %s")
         fi
-        
+
         # Save changelog to file
         cat > RELEASE_CHANGELOG.md << EOF
         ## What's Changed
-        
+
         $CHANGELOG
-        
-        ## Docker Image
-        
-        \`\`\`bash
-        docker pull vidzilla/bot:$VERSION
-        docker pull vidzilla/bot:latest
-        \`\`\`
-        
+
+
+
         ## Installation
-        
+
         \`\`\`bash
         git clone https://github.com/yourusername/vidzilla.git
         cd vidzilla
@@ -134,9 +99,9 @@ jobs:
         pip install -r requirements.txt
         python bot.py
         \`\`\`
-        
+
         ## Full Changelog
-        
+
         **Full Changelog**: https://github.com/yourusername/vidzilla/compare/$PREVIOUS_TAG...$VERSION
         EOF
 

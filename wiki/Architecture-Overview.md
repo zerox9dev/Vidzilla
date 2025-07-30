@@ -24,7 +24,7 @@ graph TB
 ```
 bot.py
 ├── Application setup
-├── Handler registration  
+├── Handler registration
 ├── Error handling
 ├── Graceful shutdown
 └── Webhook configuration
@@ -84,7 +84,7 @@ sequenceDiagram
     participant D as Downloader
     participant C as Compressor
     participant S as Storage
-    
+
     U->>B: Send video URL
     B->>B: Validate URL & User
     B->>U: "Processing..." message
@@ -218,7 +218,7 @@ class VideoCompressor:
             (1280, 720),   # 720p
             (854, 480),    # 480p
         ]
-        
+
         for quality in quality_levels:
             for width, height in resolution_levels:
                 result = await self._attempt_compression(
@@ -226,7 +226,7 @@ class VideoCompressor:
                 )
                 if result.size_mb <= target_size_mb:
                     return result
-        
+
         raise CompressionError("Unable to compress to target size")
 ```
 
@@ -237,7 +237,7 @@ class CompressionStatsTracker:
         self.active_compressions = {}
         self.completed_compressions = []
         self.system_metrics = SystemMetrics()
-    
+
     async def track_compression(self, file_path, progress_callback):
         # Track compression progress and system resources
         # Log performance metrics
@@ -259,7 +259,7 @@ LOGGING_CONFIG = {
             'backupCount': 5
         },
         'compression': {
-            'class': 'logging.handlers.RotatingFileHandler', 
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'logs/compression.log',
             'maxBytes': 10485760,
             'backupCount': 3
@@ -295,7 +295,7 @@ class URLValidator:
         'tiktok.com', 'instagram.com', 'youtube.com',
         'facebook.com', 'twitter.com', 'x.com'
     ]
-    
+
     def validate_url(self, url: str) -> bool:
         # 1. URL format validation
         # 2. Domain whitelist check
@@ -308,15 +308,15 @@ class URLValidator:
 class UserManager:
     async def check_user_permissions(self, user_id: int):
         user = await self.get_user(user_id)
-        
+
         # Check daily limits
         if not user.is_premium and user.downloads_today >= FREE_LIMIT:
             raise PermissionError("Daily limit exceeded")
-        
+
         # Check premium status
         if user.is_premium and user.premium_expires < datetime.utcnow():
             await self.revoke_premium(user_id)
-        
+
         return user
 ```
 
@@ -325,7 +325,7 @@ class UserManager:
 class SecureFileHandler:
     ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
     MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
-    
+
     def sanitize_filename(self, filename: str) -> str:
         # Remove dangerous characters
         # Limit filename length
@@ -335,23 +335,13 @@ class SecureFileHandler:
 ## 🚀 Scalability Considerations / Соображения масштабируемости
 
 ### Horizontal Scaling / Горизонтальное масштабирование
-```yaml
-# docker-compose.yml for multi-instance deployment
-version: '3.8'
-services:
-  vidzilla-1:
-    image: vidzilla:latest
-    environment:
-      - INSTANCE_ID=1
-  
-  vidzilla-2:
-    image: vidzilla:latest
-    environment:
-      - INSTANCE_ID=2
-  
-  nginx:
-    image: nginx:alpine
-    # Load balancer configuration
+```bash
+# Multi-instance deployment using systemd
+# Create multiple service files for load balancing
+sudo systemctl enable vidzilla@1.service
+sudo systemctl enable vidzilla@2.service
+sudo systemctl start vidzilla@1.service
+sudo systemctl start vidzilla@2.service
 ```
 
 ### Resource Management / Управление ресурсами
@@ -361,26 +351,28 @@ class ResourceManager:
         self.max_concurrent_compressions = 2
         self.compression_semaphore = asyncio.Semaphore(2)
         self.cleanup_interval = 3600  # 1 hour
-    
+
     async def acquire_compression_slot(self):
         await self.compression_semaphore.acquire()
-    
+
     def release_compression_slot(self):
         self.compression_semaphore.release()
 ```
 
 ## 🔄 Deployment Architecture / Архитектура развертывания
 
-### Container Architecture / Архитектура контейнеров
-```dockerfile
-# Multi-stage build for optimization
-FROM python:3.11-slim as builder
-# Install dependencies
+### Process Architecture / Архитектура процессов
+```python
+# Process management with asyncio
+async def main():
+    # Initialize monitoring
+    monitor = SystemMonitor()
 
-FROM python:3.11-slim as runtime
-# Copy only necessary files
-# Set up non-root user
-# Configure health checks
+    # Start compression worker pool
+    compression_pool = CompressionPool(max_workers=2)
+
+    # Run bot with graceful shutdown
+    await bot.start_polling()
 ```
 
 ### Service Dependencies / Зависимости сервисов
@@ -391,7 +383,7 @@ graph LR
     Bot --> TelegramAPI[Telegram API]
     Bot --> RapidAPI[RapidAPI]
     Bot --> Stripe[Stripe API]
-    
+
     MongoDB --> MongoAtlas[MongoDB Atlas]
     Bot --> Nginx[Nginx Proxy]
     Nginx --> SSL[SSL Certificate]
@@ -407,7 +399,7 @@ class AsyncVideoProcessor:
         for url in video_urls:
             task = asyncio.create_task(self.process_video(url))
             tasks.append(task)
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
         return results
 ```
@@ -418,7 +410,7 @@ class VideoCache:
     def __init__(self):
         self.cache = {}
         self.cache_ttl = 3600  # 1 hour
-    
+
     async def get_cached_video(self, url_hash):
         # Check if video was recently processed
         # Return cached result if available
@@ -438,7 +430,7 @@ class VideoCache:
 class WebhookHandler:
     async def handle_telegram_webhook(self, request):
         # Process incoming Telegram updates
-        
+
     async def handle_stripe_webhook(self, request):
         # Process Stripe payment events
 ```

@@ -149,40 +149,7 @@ python bot.py 2>&1 | tee logs/bot.log
 nohup python bot.py > logs/bot.log 2>&1 &
 ```
 
-## 🐳 Docker Installation / Установка через Docker
 
-### Using Docker Compose / Использование Docker Compose
-
-```bash
-# Clone repository
-git clone https://github.com/mirvald-space/Vidzilla.git
-cd Vidzilla
-
-# Copy environment file
-cp .env.example .env
-# Edit .env with your configuration
-
-# Build and run
-docker-compose up -d
-
-# View logs
-docker-compose logs -f vidzilla
-```
-
-### Manual Docker Setup / Ручная настройка Docker
-
-```bash
-# Build image
-docker build -t vidzilla .
-
-# Run container
-docker run -d \
-  --name vidzilla \
-  --env-file .env \
-  -v $(pwd)/temp_videos:/app/temp_videos \
-  -v $(pwd)/logs:/app/logs \
-  vidzilla
-```
 
 ## ⚙️ Advanced Configuration / Расширенная конфигурация
 
@@ -305,10 +272,10 @@ sudo systemctl status vidzilla
 server {
     listen 443 ssl;
     server_name your-domain.com;
-    
+
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/private.key;
-    
+
     location /webhook {
         proxy_pass http://localhost:8443;
         proxy_set_header Host $host;

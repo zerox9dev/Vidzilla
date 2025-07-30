@@ -4,6 +4,7 @@
 .env
 .env.local
 .env.production
+venv
 
 # Python
 __pycache__/
@@ -62,8 +63,7 @@ Thumbs.db
 # Kiro IDE
 .kiro/
 
-# Docker
-docker-compose.override.yml
+
 
 # SSL certificates
 ssl/

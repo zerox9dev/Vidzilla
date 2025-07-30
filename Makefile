@@ -88,23 +88,6 @@ wiki-stats: ## Show wiki statistics
 	@echo "💾 Total size: $$(du -sh wiki | cut -f1)"
 	@echo "📅 Last modified: $$(find wiki -name "*.md" -exec stat -f "%Sm %N" -t "%Y-%m-%d %H:%M" {} \; | sort -r | head -1)"
 
-# Docker operations
-docker-build: ## Build Docker image
-	@echo "🐳 Building Docker image..."
-	docker build -t vidzilla:latest .
-
-docker-run: ## Run Docker container
-	@echo "🐳 Running Docker container..."
-	docker run -d --name vidzilla --env-file .env vidzilla:latest
-
-docker-logs: ## Show Docker logs
-	@echo "📋 Docker logs:"
-	docker logs -f vidzilla
-
-docker-stop: ## Stop Docker container
-	@echo "🛑 Stopping Docker container..."
-	docker stop vidzilla
-	docker rm vidzilla
 
 # Database operations
 db-backup: ## Backup MongoDB database

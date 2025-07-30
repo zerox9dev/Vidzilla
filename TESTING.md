@@ -81,7 +81,7 @@ pytest tests/test_progressive_compression.py -v
 ### 4. Release (`release.yml`)
 - **Trigger**: Git tags (v*)
 - **Duration**: ~15 minutes
-- **Purpose**: Pre-release validation and Docker build
+- **Purpose**: Pre-release validation and testing
 
 ## 🐛 Troubleshooting Tests
 
@@ -212,24 +212,24 @@ from unittest.mock import patch, MagicMock
 
 class TestNewFeature:
     """Test new feature functionality."""
-    
+
     @pytest.fixture
     def mock_config(self):
         """Mock configuration for testing."""
         return {'setting': 'value'}
-    
+
     @pytest.mark.asyncio
     async def test_async_function(self, mock_config):
         """Test async functionality."""
         # Arrange
         expected = "result"
-        
+
         # Act
         result = await some_async_function(mock_config)
-        
+
         # Assert
         assert result == expected
-    
+
     def test_sync_function(self):
         """Test synchronous functionality."""
         with patch('module.dependency') as mock_dep:

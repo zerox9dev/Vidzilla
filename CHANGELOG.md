@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added FAQ section with common issues and solutions
 - Added usage examples and supported URL formats
 - Added badges and table of contents for better navigation
-- Added deployment options (Docker, systemd)
+- Added deployment options (systemd)
 - Added architecture overview and performance considerations
 
 ### 🔧 Configuration

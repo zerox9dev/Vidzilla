@@ -7,7 +7,7 @@
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://telegram.org)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Required-red.svg)](https://ffmpeg.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-green.svg)](https://mongodb.com)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
+
 
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](#testing)
 [![Platforms](https://img.shields.io/badge/Platforms-40+-orange.svg)](#supported-platforms)
@@ -230,10 +230,10 @@ A: This ensures Telegram compatibility. Original quality is preserved in documen
    ```bash
    # macOS
    brew install ffmpeg
-   
+
    # Ubuntu/Debian
    sudo apt update && sudo apt install ffmpeg
-   
+
    # Windows
    # Download from https://ffmpeg.org/download.html
    ```
@@ -243,7 +243,7 @@ A: This ensures Telegram compatibility. Original quality is preserved in documen
    cp .env.example .env
    # Edit .env with your credentials
    ```
-   
+
    ⚠️ **SECURITY WARNING**: Never commit `.env` file to version control! It contains sensitive credentials.
 
 4. **Create directories and run:**
@@ -306,21 +306,7 @@ ngrok http 8000
 python bot.py
 ```
 
-#### Production (Docker)
-```dockerfile
-FROM python:3.11-slim
-RUN apt-get update && apt-get install -y ffmpeg
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-CMD ["python", "bot.py"]
-```
 
-```bash
-docker build -t vidzilla .
-docker run -d --env-file .env -p 8000:8000 vidzilla
-```
 
 #### Production (systemd)
 ```ini
@@ -453,7 +439,7 @@ python -m pytest tests/ --cov=utils --cov=handlers
 
 #### Resource Planning
 - **CPU**: 2+ cores recommended for compression
-- **RAM**: 4GB+ for concurrent operations  
+- **RAM**: 4GB+ for concurrent operations
 - **Storage**: 10GB+ for temporary files
 - **Network**: High bandwidth for video downloads
 
@@ -1028,7 +1014,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **40+ Platforms** supported
 - **Advanced Compression** with FFmpeg
 - **Real-time Monitoring** and analytics
-- **Production Ready** with Docker support
+- **Production Ready** with systemd support
 
 ### 🔗 Links
 - **GitHub Repository**: [Vidzilla](https://github.com/yourusername/vidzilla)
