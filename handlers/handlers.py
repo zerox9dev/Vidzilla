@@ -42,7 +42,6 @@ async def send_welcome(message: Message, state: FSMContext):
     welcome_message = f"""<b>👋 Welcome!</b>
 
 Send me any video link to get started.
-Use /help to see the list of supported platforms.
 
 <b>Also check my free bots:</b>\n Translate bot <b>@Ninjatrbot</b>\n Speech-to-text <b>@voiceletbot</b>\n AI ChatGPT <b>@DockMixAIbot</b>"""
 
@@ -204,13 +203,8 @@ async def handle_coupon_activation(message: Message, state: FSMContext):
 
 async def help_command(message: Message):
     """Display help information and list of supported platforms"""
-    # Get a unique and sorted list of supported platforms
-    supported_platforms = sorted(set(PLATFORM_IDENTIFIERS.values()))
-    platforms_list = "\n".join(f"• {platform}" for platform in supported_platforms)
 
-    help_message = f"""<b>📋 Supported Platforms:</b>
-
-{platforms_list}
+    help_message = f"""
 
 <b>How to use the bot:</b>
 1. Subscribe to the required channels
@@ -218,17 +212,7 @@ async def help_command(message: Message):
 3. Paste the link in this chat
 4. Wait for the bot to process and download the video
 
-<b>Available commands:</b>
-/start - Start the bot and see welcome message
-/help - Show this help message with supported platforms
-/donate - Support the developer
-
-<b>Required channel subscriptions:</b>
 """
-
-    # Add channel information to help message
-    for channel_id, info in REQUIRED_CHANNELS.items():
-        help_message += f"\n- <a href='{info['url']}'>{info['title']}</a>"
 
     await message.answer(help_message, parse_mode="HTML", disable_web_page_preview=True)
 
