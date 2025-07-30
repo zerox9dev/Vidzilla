@@ -318,18 +318,9 @@ async def _send_video_with_fallbacks(
         # Try sending as video first
         video_file = FSInputFile(video_path)
 
-        # Prepare caption
-        caption = f"🎬 {platform_name}"
-        if video_title:
-            caption += f" - {video_title}"
-        if compression_performed:
-            final_size = get_file_size_mb(video_path)
-            caption += f"\n📊 Compressed: {file_size_mb:.1f}MB → {final_size:.1f}MB"
-
         await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
-            caption=caption[:1024],  # Telegram caption limit
             supports_streaming=True
         )
         logger.info(f"Video sent successfully as video message")
@@ -342,14 +333,9 @@ async def _send_video_with_fallbacks(
         file_name = f"{platform_name.lower()}_video_{message.from_user.id}.mp4"
         doc_file = FSInputFile(video_path, filename=file_name)
 
-        caption = f"📁 {platform_name} Video"
-        if video_title:
-            caption += f" - {video_title}"
-
         await bot.send_document(
             chat_id=message.chat.id,
             document=doc_file,
-            caption=caption[:1024],
             disable_content_type_detection=True
         )
         logger.info(f"Video sent as document")
