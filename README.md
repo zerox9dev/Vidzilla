@@ -2,33 +2,17 @@
 
 > **Fast, reliable video downloads from top social platforms**
 
-## 🆓 FREE Version (main branch)
-
-This is the **completely FREE** version of Vidzilla with no limitations:
+## ✨ Features
 
 - ✅ Download from 8 popular platforms
+- ✅ Dual format delivery (video + document)
 - ✅ No download limits
 - ✅ No subscriptions required
-- ✅ Simple and clean
+- ✅ Simple and clean interface
+- ✅ Admin panel with broadcast and stats
 
 ### 📱 Supported Platforms
 YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Reddit • Vimeo
-
----
-
-## 🌟 Other Versions
-
-### 💳 Premium with Payments
-**Branch:** `stripe-payments-feature`
-- Stripe integration for premium subscriptions
-- Advanced features and priority support
-- Payment processing and user tiers
-
-### 📢 Channel Subscription
-**Branch:** `channel-subscription-feature`
-- Require users to join specific channels
-- Access control based on channel membership
-- Automated subscription verification
 
 ---
 
@@ -36,7 +20,7 @@ YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Re
 
 1. **Clone the repo:**
    ```bash
-   git clone https://github.com/your-username/Vidzilla.git
+   git clone https://github.com/zerox9dev/Vidzilla.git
    cd Vidzilla
    ```
 
@@ -46,9 +30,15 @@ YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Re
    ```
 
 3. **Set up environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your bot token and MongoDB URI
+   Create a `.env` file with your configuration:
+   ```env
+   BOT_TOKEN=your_telegram_bot_token
+   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_DB_NAME=vidzilla
+   MONGODB_USERS_COLLECTION=users
+   ADMIN_IDS=123456789,987654321
+   WEBHOOK_URL=https://your-domain.com
+   WEBHOOK_PATH=/webhook
    ```
 
 4. **Run the bot:**
@@ -58,18 +48,28 @@ YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Re
 
 ## ⚙️ Configuration
 
-Required environment variables:
+### Required Environment Variables
 - `BOT_TOKEN` - Your Telegram bot token
 - `MONGODB_URI` - MongoDB connection string
+- `MONGODB_DB_NAME` - Database name
+- `MONGODB_USERS_COLLECTION` - Users collection name
 - `ADMIN_IDS` - Comma-separated admin user IDs
 
-## 📊 Features
+### Optional Environment Variables
+- `WEBHOOK_URL` - Your webhook URL for production
+- `WEBHOOK_PATH` - Webhook endpoint path
+- `HOST` - Server host (default: 0.0.0.0)
+- `PORT` - Server port (default: 8000)
 
-- 🎥 **Video Downloads** - From 8 major platforms
-- 📱 **Telegram Integration** - Send videos directly to chat
-- 👥 **User Management** - Track downloads and users
-- 🛠️ **Admin Panel** - Broadcast messages and view stats
-- 🚫 **Size Limits** - Clear messages for large videos (>50MB)
+## 📊 Detailed Features
+
+- 🎥 **Dual Format Downloads** - Each video sent as both video and document
+- 📱 **Telegram Integration** - Seamless video delivery to chat
+- 👥 **User Management** - MongoDB-based user tracking
+- 🛠️ **Admin Panel** - Broadcast messages and view statistics
+- 🚫 **Size Limits** - Smart handling of large videos (>50MB limit)
+- 📈 **Analytics** - Download counts and user statistics
+- 🔧 **Webhook Support** - Production-ready deployment
 
 ## 🔧 Tech Stack
 
@@ -84,4 +84,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Choose your version and start downloading! 🎉**
+**Ready to download? Start using Vidzilla today! 🎉**
+
+### 🎬 How it works:
+1. Send any video link to the bot
+2. Get your video in **two formats**: 
+   - 📺 Video file (for instant viewing)
+   - 📁 Document file (for easy downloading)
+3. Enjoy your content! 
