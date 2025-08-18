@@ -90,6 +90,9 @@ def get_platform_specific_user_agent(platform_name: str):
     elif 'youtube' in platform_lower:
         # YouTube works with any browser
         return get_random_user_agent()
+    elif 'pinterest' in platform_lower:
+        # Pinterest works better with Chrome-based browsers
+        return get_chrome_user_agent()
     else:
         # Default to random for other platforms
         return get_random_user_agent()

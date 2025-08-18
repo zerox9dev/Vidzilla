@@ -97,6 +97,12 @@ class YTDLPHandler:
                 'http_headers': get_http_headers_with_user_agent('Instagram'),
                 'cookiefile': None,  # Don't use cookies for Instagram
             })
+        elif 'pinterest' in platform_name.lower():
+            options.update({
+                'format': 'best[ext=mp4]/best',  # Will be overridden by fallback system
+                'http_headers': get_http_headers_with_user_agent('Pinterest'),
+                'no_check_certificate': True,  # Skip SSL certificate validation for Pinterest
+            })
         else:
             # For other platforms, add a generic fake user agent to improve success rate
             options.update({
@@ -107,7 +113,7 @@ class YTDLPHandler:
 
     async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
         """
-        Download video using yt-dlp
+        Download video using yt-dlp with universal format fallback system
 
         Args:
             url: Video URL
@@ -124,35 +130,143 @@ class YTDLPHandler:
         try:
             logger.info(f"Starting download from {platform_name}: {url}")
 
-            options = self.get_ytdlp_options(output_path, platform_name)
-
-            # Run yt-dlp in executor to avoid blocking
-            def run_ytdlp():
-                with yt_dlp.YoutubeDL(options) as ydl:
-                    ydl.download([url])
-
-                    # Find the downloaded file
-                    base_path = output_path.replace('.%(ext)s', '')
-                    for ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov']:
-                        potential_path = base_path + ext
-                        if os.path.exists(potential_path):
-                            return potential_path
-                    return None
-
-            loop = asyncio.get_event_loop()
-            downloaded_path = await loop.run_in_executor(None, run_ytdlp)
-
-            if downloaded_path and os.path.exists(downloaded_path):
-                file_size = get_file_size_mb(downloaded_path)
-                logger.info(f"Successfully downloaded {platform_name} video: {file_size:.2f}MB")
-                return downloaded_path
-            else:
-                logger.error(f"Failed to find downloaded file for {platform_name}")
-                return None
+            # Use universal format fallback system for all platforms
+            return await self._download_with_format_fallback(url, output_path, platform_name)
 
         except Exception as e:
             logger.error(f"Error downloading {platform_name} video: {str(e)}")
             return None
+
+    async def _download_with_format_fallback(self, url: str, output_path: str, platform_name: str) -> Optional[str]:
+        """
+        Universal download method with format fallback system for all platforms
+        """
+        # Universal format options to try, from best quality to most compatible
+        format_options = self._get_format_fallback_list(platform_name)
+
+        for i, format_option in enumerate(format_options, 1):
+            try:
+                logger.info(f"Trying {platform_name} download with format {i}/{len(format_options)}: {format_option or 'auto'}")
+
+                # Get base options for the platform
+                options = self.get_ytdlp_options(output_path, platform_name)
+
+                # Override format if specified
+                if format_option:
+                    options['format'] = format_option
+                else:
+                    # Remove format key to let yt-dlp choose automatically
+                    options.pop('format', None)
+
+                def run_ytdlp():
+                    with yt_dlp.YoutubeDL(options) as ydl:
+                        ydl.download([url])
+
+                        # Find the downloaded file with extended extensions list
+                        base_path = output_path.replace('.%(ext)s', '')
+                        for ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.flv', '.m4v', '.3gp']:
+                            potential_path = base_path + ext
+                            if os.path.exists(potential_path):
+                                return potential_path
+                        return None
+
+                loop = asyncio.get_event_loop()
+                downloaded_path = await loop.run_in_executor(None, run_ytdlp)
+
+                if downloaded_path and os.path.exists(downloaded_path):
+                    file_size = get_file_size_mb(downloaded_path)
+                    logger.info(f"Successfully downloaded {platform_name} video with format '{format_option or 'auto'}': {file_size:.2f}MB")
+                    return downloaded_path
+
+            except Exception as e:
+                logger.warning(f"{platform_name} download failed with format '{format_option or 'auto'}': {str(e)}")
+                continue
+
+        logger.error(f"All format attempts failed for {platform_name}: {url}")
+        return None
+
+    def _get_format_fallback_list(self, platform_name: str) -> list:
+        """
+        Get platform-specific format fallback list
+
+        Args:
+            platform_name: Platform name for customization
+
+        Returns:
+            List of format strings to try in order
+        """
+        platform_lower = platform_name.lower()
+
+        # Platform-specific format preferences
+        if 'youtube' in platform_lower:
+            return [
+                'best[height<=1080][ext=mp4]',
+                'best[ext=mp4]',
+                'best[height<=720][ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'bestvideo+bestaudio/best',
+                'worst',
+                None  # Auto
+            ]
+        elif 'tiktok' in platform_lower:
+            return [
+                'best[ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'bestvideo+bestaudio/best',
+                'worst',
+                None
+            ]
+        elif 'instagram' in platform_lower:
+            return [
+                'best[ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'bestvideo+bestaudio/best',
+                'worst',
+                None
+            ]
+        elif 'pinterest' in platform_lower:
+            return [
+                'best[ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'worst',
+                'bestvideo+bestaudio/best',  # This format worked for Pinterest
+                'bestvideo+bestaudio',
+                None
+            ]
+        elif 'twitter' in platform_lower or 'x.com' in platform_lower:
+            return [
+                'best[ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'bestvideo+bestaudio/best',
+                'worst',
+                None
+            ]
+        elif 'facebook' in platform_lower:
+            return [
+                'best[ext=mp4]',
+                'best[height<=720]',
+                'best',
+                'worst[ext=mp4]',
+                'bestvideo+bestaudio/best',
+                'worst',
+                None
+            ]
+        else:
+            # Universal fallback for unknown platforms
+            return [
+                'best[ext=mp4]',
+                'best',
+                'worst[ext=mp4]',
+                'worst',
+                'bestvideo+bestaudio/best',
+                'bestvideo+bestaudio',
+                None  # Let yt-dlp decide
+            ]
 
     async def extract_info(self, url: str) -> dict:
         """Extract video information without downloading"""
@@ -409,6 +523,8 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
                     error_message = f"❌ {platform_name} video is age-restricted"
                 elif "network" in str(e).lower() or "timeout" in str(e).lower() or "connection" in str(e).lower():
                     error_message = f"❌ Network error downloading {platform_name} video after {max_attempts} attempts. Please check your internet connection and try again."
+                elif "format" in str(e).lower() and "available" in str(e).lower():
+                    error_message = f"❌ {platform_name} video format not supported.\n💡 This {platform_name} content might be:\n• A static image (not a video)\n• In an unsupported format\n• Region-restricted\n• Live stream (not downloadable)\n\nTry sharing a different {platform_name} video URL."
                 else:
                     error_message = f"❌ Failed to download {platform_name} video after {max_attempts} attempts.\n💡 Try:\n• Using a different URL format\n• Checking if the video is still available\n• Trying again later"
 

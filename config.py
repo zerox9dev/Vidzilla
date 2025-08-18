@@ -14,7 +14,7 @@ TEMP_DIRECTORY = os.path.join(BASE_DIR, "temp_videos")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Server configuration
-PORT = int(os.getenv("PORT", "8005"))  # Default port 8005 if not specified
+PORT = int(os.getenv("PORT", "8000"))  # Default port 8000 if not specified
 HOST = os.getenv("HOST", "0.0.0.0")   # Default host 0.0.0.0 if not specified
 
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH")
