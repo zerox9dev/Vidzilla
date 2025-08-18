@@ -14,7 +14,6 @@ from config import (
     MONGODB_DB_NAME,
     MONGODB_URI,
     MONGODB_USERS_COLLECTION,
-    REQUIRED_CHANNELS,
 )
 
 # Set up logging
@@ -67,33 +66,15 @@ def increment_downloads(user_id):
 
 
 async def check_channel_subscription(user_id, bot):
-    """Check if the user is subscribed to all required channels
+    """Channel subscription check disabled in main branch
 
-    Args:
-        user_id: The user ID to check
-        bot: The bot instance to use for API calls
+    Channel subscription functionality is available in 'channel-subscription-feature' branch.
+    In main branch, all users have access without subscription requirements.
 
     Returns:
-        tuple: (is_subscribed, not_subscribed_channels)
-            is_subscribed: True if the user is subscribed to all channels
-            not_subscribed_channels: List of channels the user is not subscribed to
+        tuple: (True, []) - Always allows access in main branch
     """
-    not_subscribed = []
-
-    for channel_id, channel_info in REQUIRED_CHANNELS.items():
-        try:
-            chat_member = await bot.get_chat_member(chat_id=channel_id, user_id=user_id)
-            status = chat_member.status
-
-            # Consider as subscribed if member, administrator or creator
-            if status not in ["member", "administrator", "creator"]:
-                not_subscribed.append(channel_info)
-        except TelegramAPIError as e:
-            logger.error(f"Error checking subscription for channel {channel_id}: {e}")
-            # If there's an error, assume the user is not subscribed
-            not_subscribed.append(channel_info)
-
-    return len(not_subscribed) == 0, not_subscribed
+    return True, []
 
 
 def check_user_subscription(user_id, username=None, language=None):

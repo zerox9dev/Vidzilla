@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from config import PLATFORM_IDENTIFIERS, REQUIRED_CHANNELS, SUBSCRIPTION_PLANS
+from config import PLATFORM_IDENTIFIERS, SUBSCRIPTION_PLANS
 from handlers.social_media.video_processor import detect_platform_and_process
 from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
@@ -50,24 +50,11 @@ Send me any video link to get started.
 
 
 async def create_subscription_keyboard():
-    """Create a keyboard with subscription channel buttons"""
-    keyboard = []
-    row = []
+    """Subscription keyboard disabled in main branch
 
-    # Add subscription buttons horizontally in one row
-    for channel_id, info in REQUIRED_CHANNELS.items():
-        row.append(InlineKeyboardButton(text=f"{info['title']}", url=info["url"]))
-
-    # Add all subscription buttons in one row
-    if row:
-        keyboard.append(row)
-
-    # Add a button to check subscription status in a separate row
-    keyboard.append(
-        [InlineKeyboardButton(text="✅ Check subscription", callback_data="check_subscription")]
-    )
-
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+    Channel subscription functionality is available in 'channel-subscription-feature' branch.
+    """
+    return None
 
 
 async def process_link(message: Message, state: FSMContext, bot: Bot):
@@ -91,24 +78,8 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
         # Устанавливаем состояние
         await state.set_state(DownloadVideo.waiting_for_link)
 
-    # Check if user is subscribed to required channels
-    is_subscribed, not_subscribed_channels = await check_channel_subscription(user_id, bot)
-
-    # If user is not subscribed to all required channels, show a message with subscription instructions
-    if not is_subscribed:
-        subscription_message = (
-            "<b>⚠️ You need to subscribe to these channels to use the bot:</b>\n\n"
-        )
-        row = []
-
-        keyboard = await create_subscription_keyboard()
-        await message.answer(
-            subscription_message,
-            parse_mode="HTML",
-            reply_markup=keyboard,
-            disable_web_page_preview=True,
-        )
-        return
+    # Channel subscription check disabled in main branch
+    # All users have access without subscription requirements
 
     # Increment download counter but don't check for subscription
     if get_user(user_id):
@@ -138,28 +109,11 @@ async def process_link(message: Message, state: FSMContext, bot: Bot):
 
 
 async def check_subscription_callback(callback_query: types.CallbackQuery, bot: Bot):
-    """Handle callback for checking subscription status"""
-    user_id = callback_query.from_user.id
-    is_subscribed, not_subscribed_channels = await check_channel_subscription(user_id, bot)
+    """Subscription callback disabled in main branch
 
-    if is_subscribed:
-        await callback_query.answer("✅ You are subscribed to all required channels!")
-        await callback_query.message.answer(
-            "✅ You are subscribed to all required channels! You can now use the bot."
-        )
-    else:
-        await callback_query.answer("❌ You need to subscribe to all required channels")
-        subscription_message = "<b>⚠️ You are not subscribed to these channels:</b>\n\n"
-
-        keyboard = await create_subscription_keyboard()
-        await callback_query.message.answer(
-            subscription_message,
-            parse_mode="HTML",
-            reply_markup=keyboard,
-            disable_web_page_preview=True,
-        )
-
-    await callback_query.answer()
+    Channel subscription functionality is available in 'channel-subscription-feature' branch.
+    """
+    await callback_query.answer("Subscription checking is disabled in this version.")
 
 
 async def donate_command(message: types.Message, state: FSMContext):
@@ -207,10 +161,9 @@ async def help_command(message: Message):
     help_message = f"""
 
 <b>How to use the bot:</b>
-1. Subscribe to the required channels
-2. Copy a video link from any supported platform
-3. Paste the link in this chat
-4. Wait for the bot to process and download the video
+1. Copy a video link from any supported platform
+2. Paste the link in this chat
+3. Wait for the bot to process and download the video
 
 """
 

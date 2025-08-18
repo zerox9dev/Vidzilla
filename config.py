@@ -43,12 +43,10 @@ STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", BOT_URL)
 # Subscription plans - only one option now
 SUBSCRIPTION_PLANS = {"1month": {"price": 100, "name": "Support Donation"}}
 
-# Required channels for accessing the bot
+# Required channels for accessing the bot (disabled in main branch)
 # Format: {'channel_id': {'title': 'Channel Name', 'url': 'https://t.me/channel_username'}}
 REQUIRED_CHANNELS = {
-    # Update these values with your actual channel IDs, names, and URLs
-    "@talentx_tg": {"title": "TalentX", "url": "https://t.me/talentx_tg"},
-    "@Pix2Code": {"title": "Pix2Code", "url": "https://t.me/Pix2Code"},
+    # Channel subscription functionality is available in 'channel-subscription-feature' branch
 }
 
 # Dictionary for identifying platform based on URL
