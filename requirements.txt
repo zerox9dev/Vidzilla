@@ -8,8 +8,5 @@ requests==2.32.3
 aiofiles==24.1.0
 dnspython==2.7.0
 pydantic==2.11.5
-opencv-python
-ffmpeg-python
-psutil
 yt-dlp
 fake-useragent

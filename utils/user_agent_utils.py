@@ -64,38 +64,16 @@ def get_safari_user_agent():
 
 def get_platform_specific_user_agent(platform_name: str):
     """
-    Get a platform-specific user agent.
+    Get a user agent for any platform - simplified approach
 
     Args:
-        platform_name: Name of the platform (Instagram, TikTok, etc.)
+        platform_name: Name of the platform
 
     Returns:
-        Appropriate user agent string for the platform
+        Chrome user agent for maximum compatibility
     """
-    platform_lower = platform_name.lower()
-
-    # Platform-specific preferences
-    if 'instagram' in platform_lower:
-        # Instagram works better with Chrome
-        return get_chrome_user_agent()
-    elif 'tiktok' in platform_lower:
-        # TikTok works better with Chrome
-        return get_chrome_user_agent()
-    elif 'twitter' in platform_lower or 'x.com' in platform_lower:
-        # Twitter/X works well with various browsers
-        return get_random_user_agent()
-    elif 'facebook' in platform_lower:
-        # Facebook works well with Chrome
-        return get_chrome_user_agent()
-    elif 'youtube' in platform_lower:
-        # YouTube works with any browser
-        return get_random_user_agent()
-    elif 'pinterest' in platform_lower:
-        # Pinterest works better with Chrome-based browsers
-        return get_chrome_user_agent()
-    else:
-        # Default to random for other platforms
-        return get_random_user_agent()
+    # Use Chrome user agent for all platforms for maximum compatibility
+    return get_chrome_user_agent()
 
 def get_http_headers_with_user_agent(platform_name: str = "", additional_headers: dict = None):
     """
