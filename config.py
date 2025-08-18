@@ -33,15 +33,16 @@ ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
 BOT_USERNAME = os.getenv("BOT_USERNAME")
 BOT_URL = f"https://t.me/{BOT_USERNAME}"
 
-# Stripe configuration
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
-STRIPE_SUCCESS_URL = os.getenv("STRIPE_SUCCESS_URL", BOT_URL)
-STRIPE_CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", BOT_URL)
+# Stripe configuration (disabled in main branch)
+# Payment functionality is available in 'stripe-payments-feature' branch
+STRIPE_SECRET_KEY = None
+STRIPE_PUBLISHABLE_KEY = None
+STRIPE_WEBHOOK_SECRET = None
+STRIPE_SUCCESS_URL = None
+STRIPE_CANCEL_URL = None
 
-# Subscription plans - only one option now
-SUBSCRIPTION_PLANS = {"1month": {"price": 100, "name": "Support Donation"}}
+# Subscription plans (disabled in main branch)
+SUBSCRIPTION_PLANS = {}
 
 # Required channels for accessing the bot (disabled in main branch)
 # Format: {'channel_id': {'title': 'Channel Name', 'url': 'https://t.me/channel_username'}}

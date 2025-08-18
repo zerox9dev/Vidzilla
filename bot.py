@@ -8,7 +8,7 @@ from aiohttp import web
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
 from handlers.admin import register_admin_handlers
 from handlers.handlers import register_handlers
-from utils.stripe_webhook_handler import setup_stripe_webhook
+# from utils.stripe_webhook_handler import setup_stripe_webhook  # Disabled in main branch
 
 logging.basicConfig(level=logging.INFO)
 
@@ -64,7 +64,7 @@ async def create_app():
     webhook_handler.register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
-    setup_stripe_webhook(app)
+    # setup_stripe_webhook(app)  # Disabled in main branch - payment functionality available in 'stripe-payments-feature' branch
 
     app.router.add_route("*", "/", handle_root)
     app.router.add_get(WEBHOOK_PATH, handle_webhook_get)

@@ -6,7 +6,6 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config import PLATFORM_IDENTIFIERS, SUBSCRIPTION_PLANS
 from handlers.social_media.video_processor import detect_platform_and_process
-from utils.stripe_utils import create_checkout_session
 from utils.user_management import (
     activate_coupon,
     check_channel_subscription,
@@ -117,20 +116,16 @@ async def check_subscription_callback(callback_query: types.CallbackQuery, bot: 
 
 
 async def donate_command(message: types.Message, state: FSMContext):
-    user_id = message.from_user.id
-    keyboard = []
+    """Donation functionality disabled in main branch
 
-    plan = "1month"
-    details = SUBSCRIPTION_PLANS[plan]
-    price_in_dollars = details["price"] / 100  # Convert cents to dollars
-    button_text = f"Donate ${price_in_dollars:.2f} to support us"
-    checkout_url = create_checkout_session(plan, user_id)
-    keyboard.append([types.InlineKeyboardButton(text=button_text, url=checkout_url)])
-
-    reply_markup = types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+    Payment functionality is available in 'stripe-payments-feature' branch.
+    In main branch, all features are free without payment requirements.
+    """
     await message.answer(
-        "Thank you for considering a donation! Your support helps us maintain our servers and continue providing this service:",
-        reply_markup=reply_markup,
+        "💝 Thank you for your interest in supporting the bot!\n\n"
+        "Currently, all features are completely free to use. "
+        "Payment functionality is available in a separate branch for those who want to contribute.\n\n"
+        "Enjoy unlimited video downloads! 🎉"
     )
 
 
