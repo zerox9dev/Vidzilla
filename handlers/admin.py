@@ -39,7 +39,7 @@ Thank you for your patience while we were making improvements.
 You can continue using all features as normal:
 - Download videos from Instagram, TikTok, YouTube, and more
 - Convert and save videos in different formats
-- Access your subscription benefits
+- Free access to all video downloading features
 
 If you have any questions or encounter any issues, please let us know.
 

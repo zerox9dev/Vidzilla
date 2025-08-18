@@ -145,7 +145,7 @@ async def handle_coupon_activation(message: Message, state: FSMContext):
 
     if activation_result:
         await message.answer(
-            "Coupon successfully activated! You now have access to the bot for one month."
+            "Coupon successfully activated! Thank you for supporting the bot. All features remain free for everyone!"
         )
     else:
         await message.answer(

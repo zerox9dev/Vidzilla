@@ -46,21 +46,21 @@ async def handle_stripe_webhook(request):
                 logger.info(f"Subscription activated for user {user_id}")
                 end_date = datetime.now() + timedelta(days=30)
                 message = (
-                    f"Thank you for your subscription! Your access has been activated. "
-                    f"Your subscription is valid until {end_date.strftime('%Y-%m-%d')}. "
-                    f"You can now send me a link to download a video."
+                    f"Thank you for your donation! Your support helps us keep the bot running. "
+                    f"Your donation is recorded until {end_date.strftime('%Y-%m-%d')}. "
+                    f"All features remain free for everyone to use!"
                 )
                 await send_message_to_user(bot, user_id, message)
             else:
                 logger.error(f"Error activating subscription for user {user_id}")
-                message = "There was an error activating your subscription. Please contact support."
+                message = "There was an error processing your donation. Please contact support."
                 await send_message_to_user(bot, user_id, message)
         else:
             logger.error(f"Missing user_id in session {session.id}")
     elif event["type"] == "checkout.session.expired":
         session = event["data"]["object"]
         user_id = int(session.client_reference_id)
-        message = "Your payment session has expired. Please try again or contact support if you need assistance."
+        message = "Your donation session has expired. Please try again or contact support if you need assistance."
         await send_message_to_user(bot, user_id, message)
     else:
         logger.info(f"Unhandled event type: {event['type']}")

@@ -78,18 +78,23 @@ async def check_channel_subscription(user_id, bot):
 
 
 def check_user_subscription(user_id, username=None, language=None):
-    """Check if user has an active subscription"""
+    """User subscription check disabled in main branch
+
+    Channel subscription functionality is available in 'channel-subscription-feature' branch.
+    In main branch, all users have access without subscription requirements.
+
+    Returns:
+        bool: Always True in main branch
+    """
     user = get_user(user_id) or create_user(user_id, username, language)
 
     # Update language if it's provided and different from stored
     if language and user.get("language") != language:
         update_user_language(user_id, language)
 
-    if user["subscription_end"] and user["subscription_end"] > datetime.now():
-        increment_downloads(user_id)
-        return True
-
-    return False
+    # Always increment downloads and allow access in main branch
+    increment_downloads(user_id)
+    return True
 
 
 def create_coupon(duration):
