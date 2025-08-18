@@ -171,6 +171,22 @@ For advanced stats, check paid branches
         logger.error(f"Stats command error: {e}")
 
 
+def register_admin_handlers(dp):
+    """Register all admin handlers with the dispatcher"""
+    from aiogram.filters import Command
+
+    # Admin commands
+    dp.message.register(handle_admin_command, Command("admin"))
+    dp.message.register(handle_broadcast_command, Command("broadcast"))
+    dp.message.register(handle_users_command, Command("users"))
+    dp.message.register(handle_stats_command, Command("stats"))
+
+    # Admin states
+    dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
+
+    logger.info("Admin handlers registered")
+
+
 # Export functions for use in main handlers
 __all__ = [
     'AdminActions',
@@ -179,5 +195,6 @@ __all__ = [
     'handle_broadcast_command',
     'handle_broadcast_message',
     'handle_users_command',
-    'handle_stats_command'
+    'handle_stats_command',
+    'register_admin_handlers'
 ]

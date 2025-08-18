@@ -1,103 +1,163 @@
+"""
+Vidzilla Bot - FREE Version
+Main application entry point with clean architecture
+"""
+
 import asyncio
 import logging
+from typing import Dict, Any
 
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
-from handlers.admin import register_admin_handlers
+from handlers.admin import send_restart_notification
 from handlers.handlers import register_handlers
-# from utils.stripe_webhook_handler import setup_stripe_webhook  # Disabled in main branch
+from handlers.admin import register_admin_handlers
 
-logging.basicConfig(level=logging.INFO)
-
-
-async def handle_root(request):
-    return web.Response(text="Bot is running")
-
-
-async def handle_webhook_get(request):
-    return web.Response(text="Webhook is set up and working.")
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
-async def on_startup(app):
-    bot = app["bot"]
-    webhook_url = WEBHOOK_URL + WEBHOOK_PATH
-    logging.info(f"Setting webhook to {webhook_url}")
-    await bot.set_webhook(webhook_url)
-    logging.info("Webhook set successfully")
+class VidZillaBot:
+    """Main bot application class with proper lifecycle management"""
+
+    def __init__(self):
+        self.bot: Bot = None
+        self.dp: Dispatcher = None
+        self.app: web.Application = None
+        self.runner: web.AppRunner = None
+
+    async def _create_bot_and_dispatcher(self) -> None:
+        """Initialize bot and dispatcher"""
+        self.bot = Bot(token=BOT_TOKEN)
+        self.dp = Dispatcher()
+
+        # Clean up any existing webhooks
+        logger.info("Deleting existing webhook")
+        await self.bot.delete_webhook(drop_pending_updates=True)
+        logger.info("Webhook deleted")
+
+    async def _register_handlers(self) -> None:
+        """Register all bot handlers"""
+        register_handlers(self.dp)
+        register_admin_handlers(self.dp)
+        logger.info("All handlers registered")
+
+    async def _create_web_app(self) -> None:
+        """Create and configure web application"""
+        self.app = web.Application()
+        self.app["bot"] = self.bot
+
+        # Setup webhook handler
+        webhook_handler = SimpleRequestHandler(
+            dispatcher=self.dp,
+            bot=self.bot,
+        )
+        webhook_handler.register(self.app, path=WEBHOOK_PATH)
+        setup_application(self.app, self.dp, bot=self.bot)
+
+        # Add routes
+        self.app.router.add_get("/", self._handle_root)
+        self.app.router.add_get(WEBHOOK_PATH, self._handle_webhook_status)
+
+        # Setup lifecycle handlers
+        self.app.on_startup.append(self._on_startup)
+        self.app.on_shutdown.append(self._on_shutdown)
+
+    async def _handle_root(self, request: web.Request) -> web.Response:
+        """Handle root endpoint"""
+        return web.Response(text="🎬 Vidzilla Bot - FREE Version is running!")
+
+    async def _handle_webhook_status(self, request: web.Request) -> web.Response:
+        """Handle webhook status check"""
+        return web.Response(text="✅ Webhook is active and working")
+
+    async def _on_startup(self, app: web.Application) -> None:
+        """Handle application startup"""
+        webhook_url = WEBHOOK_URL + WEBHOOK_PATH
+        logger.info(f"Setting webhook to {webhook_url}")
+        await self.bot.set_webhook(webhook_url)
+        logger.info("Webhook set successfully")
+
+        # Send restart notification to admins
+        try:
+            await send_restart_notification()
+        except Exception as e:
+            logger.warning(f"Failed to send restart notification: {e}")
+
+    async def _on_shutdown(self, app: web.Application) -> None:
+        """Handle application shutdown"""
+        logger.info("Shutting down bot...")
+        if self.bot:
+            await self.bot.session.close()
+        logger.info("Bot shutdown complete")
+
+    async def create_app(self) -> web.Application:
+        """Create and configure the complete application"""
+        await self._create_bot_and_dispatcher()
+        await self._register_handlers()
+        await self._create_web_app()
+
+        logger.info("Application created successfully")
+        return self.app
+
+    async def run(self) -> None:
+        """Run the bot application"""
+        try:
+            app = await self.create_app()
+            self.runner = web.AppRunner(app)
+            await self.runner.setup()
+
+            site = web.TCPSite(self.runner, HOST, PORT)
+            logger.info(f"Starting web application on {HOST}:{PORT}")
+            await site.start()
+
+            logger.info("🎬 Vidzilla Bot - FREE Version started successfully!")
+
+            # Run forever
+            await asyncio.Event().wait()
+
+        except KeyboardInterrupt:
+            logger.info("Received shutdown signal")
+        except Exception as e:
+            logger.error(f"Application error: {e}")
+            raise
+        finally:
+            await self._cleanup()
+
+    async def _cleanup(self) -> None:
+        """Clean up resources"""
+        logger.info("Cleaning up resources...")
+        if self.runner:
+            await self.runner.cleanup()
+        logger.info("Cleanup complete")
 
 
-async def on_shutdown(app):
-    bot = app["bot"]
-    logging.info("Closing bot session")
-    await bot.session.close()
-    logging.info("Bot session closed")
+async def main() -> None:
+    """Main application entry point"""
+    logger.info("🚀 Starting Vidzilla Bot - FREE Version")
 
-
-async def handle_message(message: types.Message):
+    bot_app = VidZillaBot()
     try:
-        await message.answer("Received your message")
-    except Exception as e:
-        logging.error(f"Error in handle_message: {e}")
-
-
-async def create_app():
-    bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher()
-
-    logging.info("Deleting webhook")
-    await bot.delete_webhook(drop_pending_updates=True)
-    logging.info("Webhook deleted")
-
-    register_handlers(dp)
-    register_admin_handlers(dp)
-
-    app = web.Application()
-    app["bot"] = bot
-
-    webhook_handler = SimpleRequestHandler(
-        dispatcher=dp,
-        bot=bot,
-    )
-    webhook_handler.register(app, path=WEBHOOK_PATH)
-    setup_application(app, dp, bot=bot)
-
-    # setup_stripe_webhook(app)  # Disabled in main branch - payment functionality available in 'stripe-payments-feature' branch
-
-    app.router.add_route("*", "/", handle_root)
-    app.router.add_get(WEBHOOK_PATH, handle_webhook_get)
-
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-
-    return app
-
-
-async def main():
-    app = await create_app()
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, HOST, PORT)
-
-    logging.info(f"Starting web application on {HOST}:{PORT}")
-    await site.start()
-
-    try:
-        # Run forever
-        await asyncio.Event().wait()
+        await bot_app.run()
     except KeyboardInterrupt:
-        logging.info("KeyboardInterrupt received. Shutting down...")
-    finally:
-        logging.info("Cleaning up...")
-        await runner.cleanup()
-        logging.info("Cleanup complete. Exiting.")
+        logger.info("👋 Bot stopped by user")
+    except Exception as e:
+        logger.error(f"💥 Fatal error: {e}")
+        raise
 
 
 if __name__ == "__main__":
-    logging.info("Starting bot")
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Bot stopped")
+        logger.info("🛑 Application terminated")
+    except Exception as e:
+        logger.error(f"🚨 Application failed to start: {e}")
+        exit(1)
