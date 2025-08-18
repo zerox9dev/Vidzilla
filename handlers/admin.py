@@ -1,3 +1,5 @@
+# admin.py - FREE version
+
 import asyncio
 import logging
 
@@ -9,11 +11,9 @@ from aiogram.types import Message
 from config import ADMIN_IDS, BOT_TOKEN
 from utils.user_management import (
     broadcast_message_to_all_users,
-    create_coupon,
     get_usage_stats,
     get_users_with_usernames,
     is_admin,
-    users_collection,
 )
 
 # Set up logging
@@ -21,162 +21,163 @@ logger = logging.getLogger(__name__)
 
 
 class AdminActions(StatesGroup):
-    waiting_for_coupon_duration = State()
-    waiting_for_coupon = State()
     waiting_for_broadcast_message = State()
 
 
 async def send_restart_notification():
-    """Send a notification to all users that the bot is working again."""
+    """Send restart notification to admins"""
     bot = Bot(token=BOT_TOKEN)
+    restart_message = "🔄 Bot has been restarted and is now online!"
 
-    restart_message = """<b>🎉 Good news!</b>
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(admin_id, restart_message)
+            logger.info(f"Restart notification sent to admin {admin_id}")
+        except Exception as e:
+            logger.error(f"Failed to send restart notification to admin {admin_id}: {e}")
 
-Our bot is now back online and fully functional!
-
-Thank you for your patience while we were making improvements.
-
-You can continue using all features as normal:
-- Download videos from Instagram, TikTok, YouTube, and more
-- Convert and save videos in different formats
-- Free access to all video downloading features
-
-If you have any questions or encounter any issues, please let us know.
-
-Happy downloading! 🚀"""
-
-    logger.info("Starting to broadcast restart notification...")
-    success_count, failed_count = await broadcast_message_to_all_users(bot, restart_message)
-    logger.info(f"Broadcast completed. Success: {success_count}, Failed: {failed_count}")
-
-    # Close the bot session
     await bot.session.close()
-    return success_count, failed_count
 
 
-async def generate_coupon_command(message: Message, state: FSMContext):
+async def handle_admin_command(message: Message, state: FSMContext):
+    """Handle /admin command - FREE version"""
     if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
+        await message.answer("❌ You don't have admin permissions.")
         return
 
-    # Only 1-month coupons are available now
-    coupon_code = create_coupon("1month")
-    await message.answer("Coupon generated successfully!")
-    await message.answer(f"`{coupon_code}`", parse_mode="Markdown")
-
-
-async def stats_command(message: Message):
-    if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
-        return
-
+    # Get basic stats
     stats = get_usage_stats()
-    stats_message = (
-        f"Usage Statistics:\n\n"
-        f"Total Users: {stats['total_users']}\n"
-        f"Users With Username: {stats['users_with_username']}\n"
-        f"Users With Language: {stats['users_with_language']}\n"
-        f"Active Subscriptions: {stats['active_subscriptions']}\n"
-        f"Total Downloads: {stats['total_downloads']}\n"
-        f"Unused Coupons: {stats['unused_coupons']}"
-    )
-    await message.answer(stats_message)
+
+    admin_menu = f"""
+🔧 **Admin Panel - FREE Version**
+
+📊 **Statistics:**
+👥 Total Users: {stats['total_users']}
+⬇️ Total Downloads: {stats['total_downloads']}
+
+🎛️ **Available Commands:**
+📢 /broadcast - Send message to all users
+📋 /users - List users with usernames
+📊 /stats - Show detailed statistics
+
+ℹ️ **Note:** This is the FREE version
+For paid features, check other branches:
+• stripe-payments-feature
+• channel-subscription-feature
+"""
+
+    await message.answer(admin_menu, parse_mode="Markdown")
 
 
-async def list_users_command(message: Message):
+async def handle_broadcast_command(message: Message, state: FSMContext):
+    """Handle /broadcast command"""
     if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
+        await message.answer("❌ You don't have admin permissions.")
         return
 
-    users = get_users_with_usernames()
-    if not users:
-        await message.answer("No users with usernames found.")
-        return
-
-    # Limit to first 20 users to avoid message too long errors
-    users = users[:20]
-    user_list = "\n".join(
-        [
-            f"ID: {user['user_id']}, Username: @{user['username']}, "
-            f"Lang: {user.get('language', 'N/A')}, Downloads: {user['downloads_count']}"
-            for user in users
-        ]
-    )
-
-    await message.answer(f"Users with usernames (showing first {len(users)}):\n\n{user_list}")
-
-
-async def language_stats_command(message: Message):
-    """Command to show statistics about users' languages."""
-    if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
-        return
-
-    # Aggregate users by language
-    pipeline = [{"$group": {"_id": "$language", "count": {"$sum": 1}}}, {"$sort": {"count": -1}}]
-    language_stats = list(users_collection.aggregate(pipeline))
-
-    if not language_stats:
-        await message.answer("No language statistics available.")
-        return
-
-    # Format the statistics message
-    stats_message = "User language statistics:\n\n"
-    for stat in language_stats:
-        language = stat["_id"] if stat["_id"] else "Not specified"
-        count = stat["count"]
-        stats_message += f"{language}: {count} users\n"
-
-    await message.answer(stats_message)
-
-
-async def broadcast_command(message: Message, state: FSMContext):
-    """Command to send a notification to all users that the bot is working again."""
-    if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
-        return
-
-    await message.answer("Please enter the message you want to broadcast to all users:")
+    await message.answer("📢 Send me the message you want to broadcast to all users:")
     await state.set_state(AdminActions.waiting_for_broadcast_message)
 
 
-async def restart_notification_command(message: Message):
-    """Command to send restart notification to all users."""
+async def handle_broadcast_message(message: Message, state: FSMContext):
+    """Handle broadcast message input"""
     if not is_admin(message.from_user.id):
-        await message.answer("This command is only available for admins.")
         return
 
-    await message.answer("Sending restart notification to all users...")
+    broadcast_text = message.text
+    await message.answer("📡 Broadcasting message to all users...")
+
+    # Get bot instance
+    bot = message.bot
 
     try:
-        success_count, failed_count = await send_restart_notification()
-        await message.answer(
-            f"Restart notification sent.\nSuccess: {success_count}\nFailed: {failed_count}"
-        )
+        successful_sends, failed_sends = await broadcast_message_to_all_users(bot, broadcast_text)
+
+        result_message = f"""
+✅ **Broadcast Complete**
+
+📊 **Results:**
+✅ Successful: {successful_sends}
+❌ Failed: {failed_sends}
+📱 Total: {successful_sends + failed_sends}
+"""
+
+        await message.answer(result_message, parse_mode="Markdown")
+        logger.info(f"Broadcast completed: {successful_sends} successful, {failed_sends} failed")
+
     except Exception as e:
-        await message.answer(f"Error sending restart notification: {str(e)}")
+        await message.answer(f"❌ Broadcast failed: {str(e)}")
+        logger.error(f"Broadcast error: {e}")
+
+    await state.clear()
 
 
-async def handle_broadcast_message(message: Message, state: FSMContext, bot: Bot):
-    """Handle the broadcast message entered by the admin."""
-    broadcast_message = message.text
+async def handle_users_command(message: Message):
+    """Handle /users command"""
+    if not is_admin(message.from_user.id):
+        await message.answer("❌ You don't have admin permissions.")
+        return
 
-    await message.answer("Broadcasting message to all users. This may take some time...")
+    try:
+        users = get_users_with_usernames()
 
-    success_count, failed_count = await broadcast_message_to_all_users(bot, broadcast_message)
+        if not users:
+            await message.answer("📝 No users with usernames found.")
+            return
 
-    await message.answer(f"Broadcast completed.\nSuccess: {success_count}\nFailed: {failed_count}")
-    await state.set_state(AdminActions.waiting_for_broadcast_message)
+        users_text = "👥 **Users with usernames:**\n\n"
+        for user in users:
+            username = user.get('username', 'N/A')
+            downloads = user.get('downloads_count', 0)
+            users_text += f"@{username} (ID: {user['user_id']}) - {downloads} downloads\n"
+
+        # Split long messages
+        if len(users_text) > 4000:
+            users_text = users_text[:4000] + "...\n\n📝 List truncated due to length"
+
+        await message.answer(users_text, parse_mode="Markdown")
+
+    except Exception as e:
+        await message.answer(f"❌ Error getting users: {str(e)}")
+        logger.error(f"Users command error: {e}")
 
 
-def register_admin_handlers(dp):
-    """Register all admin-related handlers"""
-    from aiogram.filters.command import Command
+async def handle_stats_command(message: Message):
+    """Handle /stats command"""
+    if not is_admin(message.from_user.id):
+        await message.answer("❌ You don't have admin permissions.")
+        return
 
-    dp.message.register(generate_coupon_command, Command(commands=["generate_coupon"]))
-    dp.message.register(stats_command, Command(commands=["stats"]))
-    dp.message.register(broadcast_command, Command(commands=["broadcast"]))
-    dp.message.register(restart_notification_command, Command(commands=["restart_notification"]))
-    dp.message.register(handle_broadcast_message, AdminActions.waiting_for_broadcast_message)
-    dp.message.register(list_users_command, Command(commands=["list_users"]))
-    dp.message.register(language_stats_command, Command(commands=["language_stats"]))
+    try:
+        stats = get_usage_stats()
+
+        stats_message = f"""
+📊 **Bot Statistics - FREE Version**
+
+👥 **Users:**
+• Total Users: {stats['total_users']}
+
+⬇️ **Downloads:**
+• Total Downloads: {stats['total_downloads']}
+
+💡 **Note:** This is the FREE version
+For advanced stats, check paid branches
+"""
+
+        await message.answer(stats_message, parse_mode="Markdown")
+
+    except Exception as e:
+        await message.answer(f"❌ Error getting stats: {str(e)}")
+        logger.error(f"Stats command error: {e}")
+
+
+# Export functions for use in main handlers
+__all__ = [
+    'AdminActions',
+    'send_restart_notification',
+    'handle_admin_command',
+    'handle_broadcast_command',
+    'handle_broadcast_message',
+    'handle_users_command',
+    'handle_stats_command'
+]

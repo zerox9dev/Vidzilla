@@ -24,7 +24,6 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME")
 MONGODB_USERS_COLLECTION = os.getenv("MONGODB_USERS_COLLECTION")
-MONGODB_COUPONS_COLLECTION = os.getenv("MONGODB_COUPONS_COLLECTION")
 
 # User management configuration
 ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
@@ -33,22 +32,10 @@ ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
 BOT_USERNAME = os.getenv("BOT_USERNAME")
 BOT_URL = f"https://t.me/{BOT_USERNAME}"
 
-# Stripe configuration (disabled in main branch)
-# Payment functionality is available in 'stripe-payments-feature' branch
-STRIPE_SECRET_KEY = None
-STRIPE_PUBLISHABLE_KEY = None
-STRIPE_WEBHOOK_SECRET = None
-STRIPE_SUCCESS_URL = None
-STRIPE_CANCEL_URL = None
-
-# Subscription plans (disabled in main branch)
-SUBSCRIPTION_PLANS = {}
-
-# Required channels for accessing the bot (disabled in main branch)
-# Format: {'channel_id': {'title': 'Channel Name', 'url': 'https://t.me/channel_username'}}
-REQUIRED_CHANNELS = {
-    # Channel subscription functionality is available in 'channel-subscription-feature' branch
-}
+# This is the FREE version - no payments, no subscriptions, no channel requirements
+# For paid features, check other branches:
+# - stripe-payments-feature: Stripe payments and subscriptions
+# - channel-subscription-feature: Channel subscription requirements
 
 # Dictionary for identifying platform based on URL - Top 10 most popular platforms
 PLATFORM_IDENTIFIERS = {
