@@ -162,14 +162,14 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
             return
 
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Sending...")
+            await safe_edit_message(progress_msg, f"⏳ Sending video & document...")
 
         # Send video (it's within size limit)
         await send_video_with_fallback(bot, message, temp_video_path, platform_name)
 
         # Success message
         if progress_msg:
-            await safe_edit_message(progress_msg, f"✅ Done! ({file_size_mb:.1f}MB)")
+            await safe_edit_message(progress_msg, f"✅ Sent as video & document! ({file_size_mb:.1f}MB)")
 
         logger.info(f"{platform_name} video processed successfully")
 
@@ -195,39 +195,53 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
 
 
 async def send_video_with_fallback(bot, message, video_path: str, platform_name: str):
-    """Send video and document"""
+    """Send video and document - both formats for user convenience"""
     video_sent = False
     document_sent = False
+    errors = []
 
-    # Try sending as video
+    # Always try to send as video first
     try:
         video_file = FSInputFile(video_path)
         await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
-            supports_streaming=True
+            supports_streaming=True,
+            caption=f"🎬 Video from {platform_name}"
         )
         logger.info("Video sent successfully")
         video_sent = True
     except Exception as video_error:
         logger.warning(f"Failed to send as video: {video_error}")
+        errors.append(f"Video: {video_error}")
 
-    # Always try to send as document too
+    # Always try to send as document regardless of video success
     try:
         file_name = f"{platform_name.lower()}_video.mp4"
         doc_file = FSInputFile(video_path, filename=file_name)
         await bot.send_document(
             chat_id=message.chat.id,
-            document=doc_file
+            document=doc_file,
+            caption=f"📁 Document from {platform_name}"
         )
         logger.info("Video sent as document")
         document_sent = True
     except Exception as doc_error:
         logger.warning(f"Failed to send as document: {doc_error}")
+        errors.append(f"Document: {doc_error}")
 
     # Check if at least one method succeeded
     if not video_sent and not document_sent:
-        raise Exception("Failed to send video both as video and document")
+        error_msg = "Failed to send video in both formats: " + "; ".join(errors)
+        raise Exception(error_msg)
+
+    # Log success status
+    if video_sent and document_sent:
+        logger.info("Video sent successfully in both formats")
+    elif video_sent:
+        logger.info("Video sent successfully as video only")
+    elif document_sent:
+        logger.info("Video sent successfully as document only")
 
 
 async def detect_platform_and_process(message, bot, url, progress_msg=None):
