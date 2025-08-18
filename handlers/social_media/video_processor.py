@@ -133,7 +133,7 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
     try:
         # Update progress
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Downloading {platform_name} video... 50%")
+            await safe_edit_message(progress_msg, f"⏳ Downloading...")
 
         # Download video
         temp_video_path = await downloader.download_video(url, platform_name, message.from_user.id)
@@ -146,21 +146,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         logger.info(f"{platform_name} video size: {file_size_mb:.2f}MB")
 
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Checking {platform_name} video... 75%")
+            await safe_edit_message(progress_msg, f"⏳ Checking...")
 
         # Check Telegram size limit
         if file_size_mb > TELEGRAM_VIDEO_SIZE_LIMIT_MB:
             # Video is too large for Telegram
-            size_limit_message = (
-                f"📹 {platform_name} video downloaded successfully!\n"
-                f"📊 Size: {file_size_mb:.1f}MB\n\n"
-                f"❌ **Video is too large for Telegram**\n"
-                f"🚫 Telegram limit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB}MB\n\n"
-                f"💡 **Solutions:**\n"
-                f"• Try a shorter video\n"
-                f"• Use a different quality/resolution\n"
-                f"• Upload to cloud storage and share link"
-            )
+            size_limit_message = f"❌ Too large ({file_size_mb:.1f}MB)\n🚫 Limit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB}MB"
 
             if progress_msg:
                 await safe_edit_message(progress_msg, size_limit_message)
@@ -171,14 +162,14 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
             return
 
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Sending {platform_name} video... 90%")
+            await safe_edit_message(progress_msg, f"⏳ Sending...")
 
         # Send video (it's within size limit)
         await send_video_with_fallback(bot, message, temp_video_path, platform_name)
 
         # Success message
         if progress_msg:
-            await safe_edit_message(progress_msg, f"✅ {platform_name} video sent successfully! ({file_size_mb:.1f}MB)")
+            await safe_edit_message(progress_msg, f"✅ Done! ({file_size_mb:.1f}MB)")
 
         logger.info(f"{platform_name} video processed successfully")
 
@@ -186,7 +177,7 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         logger.error(f"Error processing {platform_name} video: {str(e)}")
 
         # Simple error message
-        error_message = f"❌ Failed to download {platform_name} video.\n💡 Please try again or use a different URL."
+        error_message = "❌ Error\n💡 Try another link"
 
         if progress_msg:
             await safe_edit_message(progress_msg, error_message)
@@ -204,9 +195,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
 
 
 async def send_video_with_fallback(bot, message, video_path: str, platform_name: str):
-    """Send video with document fallback"""
+    """Send video and document"""
+    video_sent = False
+    document_sent = False
+
+    # Try sending as video
     try:
-        # Try sending as video
         video_file = FSInputFile(video_path)
         await bot.send_video(
             chat_id=message.chat.id,
@@ -214,21 +208,26 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
             supports_streaming=True
         )
         logger.info("Video sent successfully")
+        video_sent = True
     except Exception as video_error:
         logger.warning(f"Failed to send as video: {video_error}")
 
-        # Fallback to document
-        try:
-            file_name = f"{platform_name.lower()}_video.mp4"
-            doc_file = FSInputFile(video_path, filename=file_name)
-            await bot.send_document(
-                chat_id=message.chat.id,
-                document=doc_file
-            )
-            logger.info("Video sent as document")
-        except Exception as doc_error:
-            logger.error(f"Failed to send as document: {doc_error}")
-            raise doc_error
+    # Always try to send as document too
+    try:
+        file_name = f"{platform_name.lower()}_video.mp4"
+        doc_file = FSInputFile(video_path, filename=file_name)
+        await bot.send_document(
+            chat_id=message.chat.id,
+            document=doc_file
+        )
+        logger.info("Video sent as document")
+        document_sent = True
+    except Exception as doc_error:
+        logger.warning(f"Failed to send as document: {doc_error}")
+
+    # Check if at least one method succeeded
+    if not video_sent and not document_sent:
+        raise Exception("Failed to send video both as video and document")
 
 
 async def detect_platform_and_process(message, bot, url, progress_msg=None):

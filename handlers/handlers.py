@@ -34,27 +34,7 @@ async def send_welcome(message: Message, state: FSMContext):
     else:
         update_user(user_id, username, language_code)
 
-    welcome_text = f"""
-🎬 **Welcome to Vidzilla - FREE Version!**
-
-Hi {message.from_user.first_name}! 👋
-
-📱 **What I can do:**
-• Download videos from top social platforms
-• Support for: YouTube, Instagram, TikTok, Facebook, Twitter, Pinterest, Reddit, Vimeo
-• Fast and reliable downloads
-• No limits, completely FREE!
-
-🚀 **How to use:**
-Just send me a video link from any supported platform and I'll download it for you!
-
-💡 **Supported platforms:**
-{', '.join(set(PLATFORM_IDENTIFIERS.values()))}
-
-🆓 **This is the FREE version** - no subscriptions, no payments required!
-
-Ready to download? Send me a video link! 🎥
-"""
+    welcome_text = f"🎬 **Vidzilla**\n\nSend video link 👇"
 
     await message.answer(welcome_text, parse_mode="Markdown")
 
@@ -74,7 +54,7 @@ async def process_video_link(message: Message, state: FSMContext):
         return
 
     # Send processing message
-    progress_msg = await message.answer("⏳ Processing your request...")
+    progress_msg = await message.answer("⏳ Loading...")
 
     try:
         # Detect platform and process video
@@ -86,10 +66,7 @@ async def process_video_link(message: Message, state: FSMContext):
             # Platform not supported
             supported_platforms = ', '.join(set(PLATFORM_IDENTIFIERS.values()))
             await progress_msg.edit_text(
-                f"❌ **Platform not supported**\n\n"
-                f"🔗 URL: `{url[:50]}{'...' if len(url) > 50 else ''}`\n\n"
-                f"✅ **Supported platforms:**\n{supported_platforms}\n\n"
-                f"💡 Please send a link from one of the supported platforms.",
+                f"❌ Platform not supported\n\n✅ {supported_platforms}",
                 parse_mode="Markdown"
             )
             return
@@ -98,74 +75,21 @@ async def process_video_link(message: Message, state: FSMContext):
         increment_download_count(user_id)
 
     except Exception as e:
-        error_message = f"❌ **Error processing video**\n\n💡 Please try again or use a different link."
+        error_message = "❌ Error\n💡 Try another link"
         await progress_msg.edit_text(error_message, parse_mode="Markdown")
         print(f"Error processing video: {e}")
 
 
 async def handle_help_command(message: Message):
     """Handle /help command"""
-    help_text = """
-🆘 **Help - Vidzilla FREE**
-
-🎬 **How to use:**
-1️⃣ Send me any video link from supported platforms
-2️⃣ Wait for processing (usually 10-30 seconds)
-3️⃣ Get your downloaded video!
-
-📱 **Supported platforms:**
-• YouTube (youtube.com, youtu.be)
-• Instagram (instagram.com)
-• TikTok (tiktok.com)
-• Facebook (facebook.com, fb.com)
-• Twitter/X (twitter.com, x.com)
-• Pinterest (pinterest.com, pin.it)
-• Reddit (reddit.com)
-• Vimeo (vimeo.com)
-
-⚠️ **Important notes:**
-• Videos larger than 50MB cannot be sent via Telegram
-• Some private or restricted videos may not be downloadable
-• Processing time depends on video size and platform
-
-🆓 **This is completely FREE!**
-No subscriptions, no payments, no limits!
-
-❓ **Need more help?** Contact admin or try different video links.
-"""
+    help_text = "📱 YouTube, Instagram, TikTok, Facebook, Twitter, Pinterest, Reddit, Vimeo\n\n💡 Just send a link"
 
     await message.answer(help_text, parse_mode="Markdown")
 
 
 async def handle_about_command(message: Message):
     """Handle /about command"""
-    about_text = """
-ℹ️ **About Vidzilla**
-
-🎬 Vidzilla is a free video downloader bot that helps you download videos from popular social media platforms.
-
-🆓 **FREE Version Features:**
-• Download from 8 popular platforms
-• No download limits
-• No subscription required
-• Fast and reliable
-• Clean, simple interface
-
-🌟 **Other Versions Available:**
-• **Stripe Payments Branch:** Premium features with Stripe integration
-• **Channel Subscription Branch:** Channel-based access control
-
-🛠️ **Technical Info:**
-• Built with Python & aiogram
-• Uses yt-dlp for video downloading
-• MongoDB for user management
-• Deployed with reliability in mind
-
-💝 **Completely Free!**
-This version is 100% free with no hidden costs or limitations.
-
-Enjoy downloading! 🎥
-"""
+    about_text = "🎬 **Vidzilla**\n\n✨ 8 platforms\n🚀 Fast & Free"
 
     await message.answer(about_text, parse_mode="Markdown")
 

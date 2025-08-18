@@ -42,7 +42,7 @@ async def send_restart_notification():
 async def handle_admin_command(message: Message, state: FSMContext):
     """Handle /admin command - FREE version"""
     if not is_admin(message.from_user.id):
-        await message.answer("❌ You don't have admin permissions.")
+        await message.answer("❌ No access")
         return
 
     # Get basic stats
@@ -72,7 +72,7 @@ For paid features, check other branches:
 async def handle_broadcast_command(message: Message, state: FSMContext):
     """Handle /broadcast command"""
     if not is_admin(message.from_user.id):
-        await message.answer("❌ You don't have admin permissions.")
+        await message.answer("❌ No access")
         return
 
     await message.answer("📢 Send me the message you want to broadcast to all users:")
@@ -115,7 +115,7 @@ async def handle_broadcast_message(message: Message, state: FSMContext):
 async def handle_users_command(message: Message):
     """Handle /users command"""
     if not is_admin(message.from_user.id):
-        await message.answer("❌ You don't have admin permissions.")
+        await message.answer("❌ No access")
         return
 
     try:
@@ -145,7 +145,7 @@ async def handle_users_command(message: Message):
 async def handle_stats_command(message: Message):
     """Handle /stats command"""
     if not is_admin(message.from_user.id):
-        await message.answer("❌ You don't have admin permissions.")
+        await message.answer("❌ No access")
         return
 
     try:
