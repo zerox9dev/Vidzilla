@@ -88,7 +88,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ### 🎬 How it works:
 1. Send any video link to the bot
-2. Get your video in **two formats**: 
+2. Get your video in **two formats**:
    - 📺 Video file (for instant viewing)
    - 📁 Document file (for easy downloading)
-3. Enjoy your content! 
+3. Enjoy your content!

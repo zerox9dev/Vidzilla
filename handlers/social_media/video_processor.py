@@ -164,12 +164,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         if progress_msg:
             await safe_edit_message(progress_msg, f"⏳ Sending video & document...")
 
-        # Send video (it's within size limit)
+        # Send video and document in media group (it's within size limit)
         await send_video_with_fallback(bot, message, temp_video_path, platform_name)
 
         # Success message
         if progress_msg:
-            await safe_edit_message(progress_msg, f"✅ Sent as video & document! ({file_size_mb:.1f}MB)")
+            await safe_edit_message(progress_msg, f"✅ Sent video & document! ({file_size_mb:.1f}MB)")
 
         logger.info(f"{platform_name} video processed successfully")
 
@@ -195,15 +195,16 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
 
 
 async def send_video_with_fallback(bot, message, video_path: str, platform_name: str):
-    """Send video and document - both formats for user convenience"""
+    """Send video and document as separate linked messages"""
     video_sent = False
     document_sent = False
     errors = []
+    video_message = None
 
-    # Always try to send as video first
+    # Send as video first
     try:
         video_file = FSInputFile(video_path)
-        await bot.send_video(
+        video_message = await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
             supports_streaming=True,
@@ -215,14 +216,20 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
         logger.warning(f"Failed to send as video: {video_error}")
         errors.append(f"Video: {video_error}")
 
-    # Always try to send as document regardless of video success
+    # Send as document second, with reply to video if available
     try:
         file_name = f"{platform_name.lower()}_video.mp4"
         doc_file = FSInputFile(video_path, filename=file_name)
+
+        # Reply to video message if it was sent successfully
+        reply_to_message_id = video_message.message_id if video_message else None
+
         await bot.send_document(
             chat_id=message.chat.id,
             document=doc_file,
-            caption=f"📁 Document from {platform_name}"
+            caption=f"📁 Same video as MP4 document",
+            reply_to_message_id=reply_to_message_id,
+            disable_content_type_detection=True
         )
         logger.info("Video sent as document")
         document_sent = True
@@ -237,7 +244,7 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
 
     # Log success status
     if video_sent and document_sent:
-        logger.info("Video sent successfully in both formats")
+        logger.info("Video sent successfully in both formats (linked)")
     elif video_sent:
         logger.info("Video sent successfully as video only")
     elif document_sent:
