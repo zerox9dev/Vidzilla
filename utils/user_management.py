@@ -129,7 +129,7 @@ def activate_coupon(user_id, coupon_code):
 
 
 def get_subscription_required_message():
-    return "Downloads are free! If you find this bot useful, please consider making a $1 donation to support our server costs.\n\nUse /donate command to support us."
+    return "All downloads are completely free! Enjoy unlimited video downloads from all supported platforms. 🎉"
 
 
 async def update_subscription(user_id, plan):
