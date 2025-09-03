@@ -1,7 +1,4 @@
-"""
-Vidzilla Bot - FREE Version
-Main application entry point with clean architecture
-"""
+
 
 import asyncio
 import logging
@@ -25,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class VidZillaBot:
-    """Main bot application class with proper lifecycle management"""
 
     def __init__(self):
         self.bot: Bot = None
@@ -34,7 +30,6 @@ class VidZillaBot:
         self.runner: web.AppRunner = None
 
     async def _create_bot_and_dispatcher(self) -> None:
-        """Initialize bot and dispatcher"""
         self.bot = Bot(token=BOT_TOKEN)
         self.dp = Dispatcher()
 
@@ -44,13 +39,11 @@ class VidZillaBot:
         logger.info("Webhook deleted")
 
     async def _register_handlers(self) -> None:
-        """Register all bot handlers"""
         register_handlers(self.dp)
         register_admin_handlers(self.dp)
         logger.info("All handlers registered")
 
     async def _create_web_app(self) -> None:
-        """Create and configure web application"""
         self.app = web.Application()
         self.app["bot"] = self.bot
 
@@ -71,15 +64,12 @@ class VidZillaBot:
         self.app.on_shutdown.append(self._on_shutdown)
 
     async def _handle_root(self, request: web.Request) -> web.Response:
-        """Handle root endpoint"""
-        return web.Response(text="🎬 Vidzilla Bot - FREE Version is running!")
+        return web.Response(text="Vidzilla Bot - FREE Version is running!")
 
     async def _handle_webhook_status(self, request: web.Request) -> web.Response:
-        """Handle webhook status check"""
-        return web.Response(text="✅ Webhook is active and working")
+        return web.Response(text="Webhook is active and working")
 
     async def _on_startup(self, app: web.Application) -> None:
-        """Handle application startup"""
         webhook_url = WEBHOOK_URL + WEBHOOK_PATH
         logger.info(f"Setting webhook to {webhook_url}")
         await self.bot.set_webhook(webhook_url)
@@ -92,14 +82,12 @@ class VidZillaBot:
             logger.warning(f"Failed to send restart notification: {e}")
 
     async def _on_shutdown(self, app: web.Application) -> None:
-        """Handle application shutdown"""
         logger.info("Shutting down bot...")
         if self.bot:
             await self.bot.session.close()
         logger.info("Bot shutdown complete")
 
     async def create_app(self) -> web.Application:
-        """Create and configure the complete application"""
         await self._create_bot_and_dispatcher()
         await self._register_handlers()
         await self._create_web_app()
@@ -108,7 +96,6 @@ class VidZillaBot:
         return self.app
 
     async def run(self) -> None:
-        """Run the bot application"""
         try:
             app = await self.create_app()
             self.runner = web.AppRunner(app)
@@ -118,7 +105,7 @@ class VidZillaBot:
             logger.info(f"Starting web application on {HOST}:{PORT}")
             await site.start()
 
-            logger.info("🎬 Vidzilla Bot - FREE Version started successfully!")
+            logger.info("Vidzilla Bot - FREE Version started successfully!")
 
             # Run forever
             await asyncio.Event().wait()
@@ -132,7 +119,6 @@ class VidZillaBot:
             await self._cleanup()
 
     async def _cleanup(self) -> None:
-        """Clean up resources"""
         logger.info("Cleaning up resources...")
         if self.runner:
             await self.runner.cleanup()
@@ -140,16 +126,15 @@ class VidZillaBot:
 
 
 async def main() -> None:
-    """Main application entry point"""
-    logger.info("🚀 Starting Vidzilla Bot - FREE Version")
+    logger.info("Starting Vidzilla Bot - FREE Version")
 
     bot_app = VidZillaBot()
     try:
         await bot_app.run()
     except KeyboardInterrupt:
-        logger.info("👋 Bot stopped by user")
+        logger.info("Bot stopped by user")
     except Exception as e:
-        logger.error(f"💥 Fatal error: {e}")
+        logger.error(f"Fatal error: {e}")
         raise
 
 
@@ -157,7 +142,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("🛑 Application terminated")
+        logger.info("Application terminated")
     except Exception as e:
-        logger.error(f"🚨 Application failed to start: {e}")
+        logger.error(f"Application failed to start: {e}")
         exit(1)

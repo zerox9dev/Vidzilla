@@ -56,11 +56,6 @@ This project uses the following third-party libraries:
 - Repository: https://github.com/psf/requests
 - Used for: HTTP requests
 
-### stripe
-- License: MIT License
-- Repository: https://github.com/stripe/stripe-python
-- Used for: Payment processing
-
 ### opencv-python
 - License: MIT License
 - Repository: https://github.com/opencv/opencv-python

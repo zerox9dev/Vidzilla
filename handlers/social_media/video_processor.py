@@ -1,7 +1,4 @@
-"""
-Simplified video processor using yt-dlp with minimal configuration.
-Supports top 8 most popular platforms with maximum stability.
-"""
+
 
 import asyncio
 import logging
@@ -24,7 +21,6 @@ TELEGRAM_VIDEO_SIZE_LIMIT_MB = 50  # Telegram's video size limit
 
 
 def get_file_size_mb(file_path: str) -> float:
-    """Get file size in megabytes"""
     try:
         size_bytes = os.path.getsize(file_path)
         return size_bytes / (1024 * 1024)
@@ -33,14 +29,12 @@ def get_file_size_mb(file_path: str) -> float:
 
 
 class SimpleVideoDownloader:
-    """Simplified video downloader using yt-dlp with minimal configuration"""
 
     def __init__(self):
         self.temp_dir = TEMP_DIRECTORY
         os.makedirs(self.temp_dir, exist_ok=True)
 
     def get_simple_ytdlp_options(self, output_path: str) -> dict:
-        """Get minimal yt-dlp options for maximum compatibility"""
         return {
             'outtmpl': output_path,
             'format': 'best[ext=mp4]/best/worst',  # Simple format selection
@@ -55,17 +49,6 @@ class SimpleVideoDownloader:
         }
 
     async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
-        """
-        Simple video download with basic error handling
-
-        Args:
-            url: Video URL
-            platform_name: Platform name for logging
-            user_id: User ID for unique filename
-
-        Returns:
-            Path to downloaded video file or None if failed
-        """
         request_id = str(uuid.uuid4())[:8]
         filename = f"{platform_name.lower()}_{user_id}_{request_id}.%(ext)s"
         output_path = os.path.join(self.temp_dir, filename)
@@ -104,7 +87,6 @@ class SimpleVideoDownloader:
 
 
 async def safe_edit_message(progress_msg, new_text: str):
-    """Safely edit a message, avoiding errors"""
     if not progress_msg:
         return
 
@@ -117,23 +99,13 @@ async def safe_edit_message(progress_msg, new_text: str):
 
 
 async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):
-    """
-    Simplified video processing without compression
-
-    Args:
-        message: User message object
-        bot: Bot instance
-        url: Social media URL to process
-        platform_name: Name of the platform
-        progress_msg: Message object for progress updates
-    """
     downloader = SimpleVideoDownloader()
     temp_video_path = None
 
     try:
         # Update progress
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Downloading...")
+            await safe_edit_message(progress_msg, f"Downloading...")
 
         # Download video
         temp_video_path = await downloader.download_video(url, platform_name, message.from_user.id)
@@ -146,12 +118,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         logger.info(f"{platform_name} video size: {file_size_mb:.2f}MB")
 
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Checking...")
+            await safe_edit_message(progress_msg, f"Checking...")
 
         # Check Telegram size limit
         if file_size_mb > TELEGRAM_VIDEO_SIZE_LIMIT_MB:
             # Video is too large for Telegram
-            size_limit_message = f"❌ Too large ({file_size_mb:.1f}MB)\n🚫 Limit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB}MB"
+            size_limit_message = f"Too large ({file_size_mb:.1f}MB)\nLimit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB}MB"
 
             if progress_msg:
                 await safe_edit_message(progress_msg, size_limit_message)
@@ -162,14 +134,14 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
             return
 
         if progress_msg:
-            await safe_edit_message(progress_msg, f"⏳ Sending video & document...")
+            await safe_edit_message(progress_msg, f"Sending video & document...")
 
         # Send video and document in media group (it's within size limit)
         await send_video_with_fallback(bot, message, temp_video_path, platform_name)
 
         # Success message
         if progress_msg:
-            await safe_edit_message(progress_msg, f"✅ Sent video & document! ({file_size_mb:.1f}MB)")
+            await safe_edit_message(progress_msg, f"Sent video & document! ({file_size_mb:.1f}MB)")
 
         logger.info(f"{platform_name} video processed successfully")
 
@@ -177,7 +149,7 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         logger.error(f"Error processing {platform_name} video: {str(e)}")
 
         # Simple error message
-        error_message = "❌ Error\n💡 Try another link"
+        error_message = "Error\nTry another link"
 
         if progress_msg:
             await safe_edit_message(progress_msg, error_message)
@@ -195,7 +167,6 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
 
 
 async def send_video_with_fallback(bot, message, video_path: str, platform_name: str):
-    """Send video and document as separate linked messages"""
     video_sent = False
     document_sent = False
     errors = []
@@ -208,7 +179,7 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
             chat_id=message.chat.id,
             video=video_file,
             supports_streaming=True,
-            caption=f"🎬 Video from {platform_name}"
+            caption=f"Video from {platform_name}"
         )
         logger.info("Video sent successfully")
         video_sent = True
@@ -227,7 +198,7 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
         await bot.send_document(
             chat_id=message.chat.id,
             document=doc_file,
-            caption=f"📁 Same video as MP4 document",
+            caption=f"Same video as MP4 document",
             reply_to_message_id=reply_to_message_id,
             disable_content_type_detection=True
         )
@@ -252,18 +223,6 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
 
 
 async def detect_platform_and_process(message, bot, url, progress_msg=None):
-    """
-    Detect platform and process video
-
-    Args:
-        message: User message object
-        bot: Bot instance
-        url: Social media URL to process
-        progress_msg: Message object for progress updates
-
-    Returns:
-        bool: True if platform was detected and processed
-    """
     # Check supported platforms
     for domain, platform_name in PLATFORM_IDENTIFIERS.items():
         if domain in url:

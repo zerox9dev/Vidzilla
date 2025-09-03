@@ -4,7 +4,7 @@ python-dotenv==1.1.0
 asyncio==3.4.3
 pymongo==4.13.0
 requests==2.32.3
-# stripe==12.1.0  # Disabled in main branch, available in 'stripe-payments-feature' branch
+
 aiofiles==24.1.0
 dnspython==2.7.0
 pydantic==2.11.5

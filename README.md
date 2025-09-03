@@ -1,22 +1,22 @@
-# 🎬 Vidzilla - Video Downloader Bot
+# Vidzilla - Video Downloader Bot
 
 > **Fast, reliable video downloads from top social platforms**
 
-## ✨ Features
+## Features
 
-- ✅ Download from 8 popular platforms
-- ✅ Dual format delivery (video + document)
-- ✅ No download limits
-- ✅ No subscriptions required
-- ✅ Simple and clean interface
-- ✅ Admin panel with broadcast and stats
+- Download from 8 popular platforms
+- Dual format delivery (video + document)
+- No download limits
+- No subscriptions required
+- Simple and clean interface
+- Admin panel with broadcast and stats
 
-### 📱 Supported Platforms
+### Supported Platforms
 YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Reddit • Vimeo
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Clone the repo:**
    ```bash
@@ -46,7 +46,7 @@ YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Re
    python bot.py
    ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Required Environment Variables
 - `BOT_TOKEN` - Your Telegram bot token
@@ -61,34 +61,33 @@ YouTube • Instagram • TikTok • Facebook • Twitter/X • Pinterest • Re
 - `HOST` - Server host (default: 0.0.0.0)
 - `PORT` - Server port (default: 8000)
 
-## 📊 Detailed Features
+## Detailed Features
 
-- 🎥 **Dual Format Downloads** - Each video sent as both video and document
-- 📱 **Telegram Integration** - Seamless video delivery to chat
-- 👥 **User Management** - MongoDB-based user tracking
-- 🛠️ **Admin Panel** - Broadcast messages and view statistics
-- 🚫 **Size Limits** - Smart handling of large videos (>50MB limit)
-- 📈 **Analytics** - Download counts and user statistics
-- 🔧 **Webhook Support** - Production-ready deployment
+- Dual Format Downloads - Each video sent as both video and document
+- Telegram Integration - Seamless video delivery to chat
+- User Management - MongoDB-based user tracking
+- Admin Panel - Broadcast messages and view statistics
+- Size Limits - Smart handling of large videos (>50MB limit)
+- Analytics - Download counts and user statistics
+- Webhook Support - Production-ready deployment
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **Python 3.8+** with aiogram 3.x
 - **MongoDB** for user data
 - **yt-dlp** for video downloading
-- **Docker** ready for deployment
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Ready to download? Start using Vidzilla today! 🎉**
+Ready to download? Start using Vidzilla today!
 
-### 🎬 How it works:
+### How it works:
 1. Send any video link to the bot
-2. Get your video in **two formats**:
-   - 📺 Video file (for instant viewing)
-   - 📁 Document file (for easy downloading)
+2. Get your video in two formats:
+   - Video file (for instant viewing)
+   - Document file (for easy downloading)
 3. Enjoy your content!

@@ -33,12 +33,10 @@ users_collection = db[MONGODB_USERS_COLLECTION]
 
 
 def get_user(user_id):
-    """Get user from database"""
     return users_collection.find_one({"user_id": user_id})
 
 
 def create_user(user_id, username=None, language=None):
-    """Create new user - FREE version (no subscription tracking)"""
     user = {
         "user_id": user_id,
         "username": username,
@@ -51,7 +49,6 @@ def create_user(user_id, username=None, language=None):
 
 
 def update_user(user_id, username=None, language=None):
-    """Update user information"""
     update_data = {"last_activity": datetime.now()}
     if username:
         update_data["username"] = username
@@ -65,7 +62,6 @@ def update_user(user_id, username=None, language=None):
 
 
 def increment_download_count(user_id):
-    """Increment user's download counter"""
     users_collection.update_one(
         {"user_id": user_id},
         {"$inc": {"downloads_count": 1}}
@@ -73,12 +69,10 @@ def increment_download_count(user_id):
 
 
 def is_admin(user_id):
-    """Check if user is admin"""
     return user_id in ADMIN_IDS
 
 
 def get_users_with_usernames():
-    """Get all users with usernames for admin"""
     return list(users_collection.find(
         {"username": {"$ne": None}},
         {"user_id": 1, "username": 1, "downloads_count": 1}
@@ -86,7 +80,6 @@ def get_users_with_usernames():
 
 
 def get_usage_stats():
-    """Get basic usage statistics"""
     total_users = users_collection.count_documents({})
     total_downloads = users_collection.aggregate([
         {"$group": {"_id": None, "total": {"$sum": "$downloads_count"}}}
@@ -103,7 +96,6 @@ def get_usage_stats():
 
 
 async def broadcast_message_to_all_users(bot: Bot, message_text: str):
-    """Broadcast message to all users"""
     users = users_collection.find({}, {"user_id": 1})
     successful_sends = 0
     failed_sends = 0
@@ -121,10 +113,8 @@ async def broadcast_message_to_all_users(bot: Bot, message_text: str):
 
 # FREE version - no subscription checks, everyone has access
 async def check_channel_subscription(user_id, bot):
-    """FREE version - no subscription required"""
     return True
 
 
 def check_user_subscription(user_id, username=None, language=None):
-    """FREE version - no subscription required"""
     return True

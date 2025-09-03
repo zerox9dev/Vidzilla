@@ -22,7 +22,6 @@ class DownloadVideo(StatesGroup):
 
 
 async def send_welcome(message: Message, state: FSMContext):
-    """Send welcome message - FREE version"""
     user_id = message.from_user.id
     username = message.from_user.username
     language_code = message.from_user.language_code
@@ -34,13 +33,12 @@ async def send_welcome(message: Message, state: FSMContext):
     else:
         update_user(user_id, username, language_code)
 
-    welcome_text = f"🎬 **Vidzilla**\n\nSend video link 👇"
+    welcome_text = f"Vidzilla\n\nSend video link"
 
     await message.answer(welcome_text, parse_mode="Markdown")
 
 
 async def process_video_link(message: Message, state: FSMContext):
-    """Process video link - FREE version"""
     user_id = message.from_user.id
     url = message.text.strip()
 
@@ -54,7 +52,7 @@ async def process_video_link(message: Message, state: FSMContext):
         return
 
     # Send processing message
-    progress_msg = await message.answer("⏳ Loading...")
+    progress_msg = await message.answer("Loading...")
 
     try:
         # Detect platform and process video
@@ -66,7 +64,7 @@ async def process_video_link(message: Message, state: FSMContext):
             # Platform not supported
             supported_platforms = ', '.join(set(PLATFORM_IDENTIFIERS.values()))
             await progress_msg.edit_text(
-                f"❌ Platform not supported\n\n✅ {supported_platforms}",
+                f"Platform not supported\n\n{supported_platforms}",
                 parse_mode="Markdown"
             )
             return
@@ -75,27 +73,24 @@ async def process_video_link(message: Message, state: FSMContext):
         increment_download_count(user_id)
 
     except Exception as e:
-        error_message = "❌ Error\n💡 Try another link"
+        error_message = "Error\nTry another link"
         await progress_msg.edit_text(error_message, parse_mode="Markdown")
         print(f"Error processing video: {e}")
 
 
 async def handle_help_command(message: Message):
-    """Handle /help command"""
-    help_text = "📱 YouTube, Instagram, TikTok, Facebook, Twitter, Pinterest, Reddit, Vimeo\n\n💡 Just send a link"
+    help_text = "YouTube, Instagram, TikTok, Facebook, Twitter, Pinterest, Reddit, Vimeo\n\nJust send a link"
 
     await message.answer(help_text, parse_mode="Markdown")
 
 
 async def handle_about_command(message: Message):
-    """Handle /about command"""
-    about_text = "🎬 **Vidzilla**\n\n✨ 8 platforms\n🚀 Fast & Free"
+    about_text = "Vidzilla\n\n8 platforms\nFast & Free"
 
     await message.answer(about_text, parse_mode="Markdown")
 
 
 def register_handlers(dp):
-    """Register all main bot handlers with the dispatcher"""
     from aiogram.filters import Command
     from aiogram import F
 
