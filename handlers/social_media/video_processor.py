@@ -170,8 +170,7 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
         video_message = await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
-            supports_streaming=True,
-            caption=f"Video from {platform_name}"
+            supports_streaming=True
         )
         logger.info("Video sent successfully")
         video_sent = True
@@ -190,7 +189,6 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
         await bot.send_document(
             chat_id=message.chat.id,
             document=doc_file,
-            caption=f"Same video as MP4 document",
             reply_to_message_id=reply_to_message_id,
             disable_content_type_detection=True
         )

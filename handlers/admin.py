@@ -93,19 +93,17 @@ Total: {successful_sends + failed_sends}
 @admin_required
 @handle_errors("Error getting users")
 async def handle_users_command(message: Message):
-    try:
-        users = get_users_with_usernames()
-        users_text = format_user_list(users)
-        await send_message_with_fallback(message.bot, message.chat.id, users_text, parse_mode="Markdown")
+    users = get_users_with_usernames()
+    users_text = format_user_list(users)
+    await send_message_with_fallback(message.bot, message.chat.id, users_text, parse_mode="Markdown")
 
 
 @admin_required
 @handle_errors("Error getting stats")
 async def handle_stats_command(message: Message):
-    try:
-        stats = get_usage_stats()
+    stats = get_usage_stats()
 
-        stats_message = f"""
+    stats_message = f"""
 Bot Statistics - FREE Version
 
 Users:
@@ -118,7 +116,7 @@ Note: This is the FREE version
 For advanced stats, check paid branches
 """
 
-        await message.answer(stats_message, parse_mode="Markdown")
+    await message.answer(stats_message, parse_mode="Markdown")
 
 
 def register_admin_handlers(dp):
