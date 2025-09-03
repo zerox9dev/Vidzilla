@@ -22,7 +22,7 @@ class DownloadVideo(StatesGroup):
 async def send_welcome(message: Message, state: FSMContext):
     # Ensure user exists in database
     ensure_user_exists(message)
-    welcome_text = "👋 Hi!\n\n📥 I help you download videos and photos from Instagram, TikTok, YouTube and Pinterest —\nwithout watermarks and in the best quality!\n\n📎 Just send a link — and get video in a couple of seconds!"
+    welcome_text = "👋 Hi!\n\n📥 I help you download videos and photos from Instagram, TikTok, YouTube and Pinterest —\nwithout watermarks and in the best quality!\n\n📎 Just send a link — and get video in a couple of seconds!\n\n🤖 Also check @DockMixAIbot — AI GPT + Claude assistant!"
 
     await message.answer(welcome_text, parse_mode="Markdown")
 
