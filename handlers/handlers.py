@@ -22,8 +22,7 @@ class DownloadVideo(StatesGroup):
 async def send_welcome(message: Message, state: FSMContext):
     # Ensure user exists in database
     ensure_user_exists(message)
-
-    welcome_text = "Vidzilla\n\nSend video link"
+    welcome_text = "👋 Hi!\n\n📥 I help you download videos and photos from Instagram, TikTok, YouTube and Pinterest —\nwithout watermarks and in the best quality!\n\n📎 Just send a link — and get video in a couple of seconds!"
 
     await message.answer(welcome_text, parse_mode="Markdown")
 
@@ -60,14 +59,9 @@ async def process_video_link(message: Message, state: FSMContext):
     increment_download_count(user_id)
 
 
-async def handle_help_command(message: Message):
-    help_text = "YouTube, Instagram, TikTok, Facebook, Twitter, Pinterest, Reddit, Vimeo\n\nJust send a link"
-
-    await message.answer(help_text, parse_mode="Markdown")
-
 
 async def handle_about_command(message: Message):
-    about_text = "Vidzilla\n\n8 platforms\nFast & Free"
+    about_text = "Vidzilla\n\n8 platforms\nFast & Free\n\n- YouTube\n- Instagram\n- TikTok\n- Facebook\n- Twitter\n- Pinterest\n- Reddit\n- Vimeo"
 
     await message.answer(about_text, parse_mode="Markdown")
 
@@ -78,7 +72,6 @@ def register_handlers(dp):
 
     # Commands
     dp.message.register(send_welcome, Command("start"))
-    dp.message.register(handle_help_command, Command("help"))
     dp.message.register(handle_about_command, Command("about"))
 
     # Video link processing (any message that contains URLs)
@@ -95,7 +88,6 @@ __all__ = [
     'DownloadVideo',
     'send_welcome',
     'process_video_link',
-    'handle_help_command',
     'handle_about_command',
     'register_handlers'
 ]
