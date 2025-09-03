@@ -27,7 +27,6 @@ That's it! 😊
 
 ## Bot commands:
 /start - Start using the bot
-/about - About the bot
 
 ## For developers
 

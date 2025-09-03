@@ -60,19 +60,12 @@ async def process_video_link(message: Message, state: FSMContext):
 
 
 
-async def handle_about_command(message: Message):
-    about_text = "Vidzilla\n\n8 platforms\nFast & Free\n\n- YouTube\n- Instagram\n- TikTok\n- Facebook\n- Twitter\n- Pinterest\n- Reddit\n- Vimeo"
-
-    await message.answer(about_text, parse_mode="Markdown")
-
-
 def register_handlers(dp):
     from aiogram.filters import Command
     from aiogram import F
 
     # Commands
     dp.message.register(send_welcome, Command("start"))
-    dp.message.register(handle_about_command, Command("about"))
 
     # Video link processing (any message that contains URLs)
     dp.message.register(process_video_link, F.text.regexp(r'https?://'))
@@ -88,6 +81,5 @@ __all__ = [
     'DownloadVideo',
     'send_welcome',
     'process_video_link',
-    'handle_about_command',
     'register_handlers'
 ]
