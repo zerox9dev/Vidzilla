@@ -12,6 +12,7 @@ from aiogram.types import FSInputFile
 
 from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS
 from utils.user_agent_utils import get_random_user_agent
+from utils.common_utils import safe_edit_message
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -86,16 +87,7 @@ class SimpleVideoDownloader:
             return None
 
 
-async def safe_edit_message(progress_msg, new_text: str):
-    if not progress_msg:
-        return
 
-    try:
-        if hasattr(progress_msg, "text") and progress_msg.text == new_text:
-            return
-        await progress_msg.edit_text(new_text)
-    except Exception as e:
-        logger.debug(f"Message edit failed: {e}")
 
 
 async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):

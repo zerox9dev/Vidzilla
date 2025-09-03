@@ -28,13 +28,7 @@ MONGODB_USERS_COLLECTION = os.getenv("MONGODB_USERS_COLLECTION")
 # User management configuration
 ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
 
-# Bot configuration
-BOT_USERNAME = os.getenv("BOT_USERNAME")
-BOT_URL = f"https://t.me/{BOT_USERNAME}"
 
-# This is the FREE version - no payments, no subscriptions, no channel requirements
-# For paid features, check other branches:
-# - channel-subscription-feature: Channel subscription requirements
 
 # Dictionary for identifying platform based on URL - Top 10 most popular platforms
 PLATFORM_IDENTIFIERS = {

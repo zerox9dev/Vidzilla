@@ -15,6 +15,8 @@ from utils.user_management import (
     get_users_with_usernames,
     is_admin,
 )
+from utils.common_utils import admin_required, handle_errors, send_message_with_fallback, format_user_list
+from utils.bot_manager import send_restart_notification
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -24,25 +26,11 @@ class AdminActions(StatesGroup):
     waiting_for_broadcast_message = State()
 
 
-async def send_restart_notification():
-    bot = Bot(token=BOT_TOKEN)
-    restart_message = "Bot has been restarted and is now online!"
-
-    for admin_id in ADMIN_IDS:
-        try:
-            await bot.send_message(admin_id, restart_message)
-            logger.info(f"Restart notification sent to admin {admin_id}")
-        except Exception as e:
-            logger.error(f"Failed to send restart notification to admin {admin_id}: {e}")
-
-    await bot.session.close()
 
 
+
+@admin_required
 async def handle_admin_command(message: Message, state: FSMContext):
-    if not is_admin(message.from_user.id):
-        await message.answer("No access")
-        return
-
     # Get basic stats
     stats = get_usage_stats()
 
@@ -66,19 +54,14 @@ For paid features, check other branches:
     await message.answer(admin_menu, parse_mode="Markdown")
 
 
+@admin_required
 async def handle_broadcast_command(message: Message, state: FSMContext):
-    if not is_admin(message.from_user.id):
-        await message.answer("No access")
-        return
-
     await message.answer("Send me the message you want to broadcast to all users:")
     await state.set_state(AdminActions.waiting_for_broadcast_message)
 
 
+@admin_required
 async def handle_broadcast_message(message: Message, state: FSMContext):
-    if not is_admin(message.from_user.id):
-        return
-
     broadcast_text = message.text
     await message.answer("Broadcasting message to all users...")
 
@@ -107,40 +90,18 @@ Total: {successful_sends + failed_sends}
     await state.clear()
 
 
+@admin_required
+@handle_errors("Error getting users")
 async def handle_users_command(message: Message):
-    if not is_admin(message.from_user.id):
-        await message.answer("No access")
-        return
-
     try:
         users = get_users_with_usernames()
-
-        if not users:
-            await message.answer("No users with usernames found.")
-            return
-
-        users_text = "Users with usernames:\n\n"
-        for user in users:
-            username = user.get('username', 'N/A')
-            downloads = user.get('downloads_count', 0)
-            users_text += f"@{username} (ID: {user['user_id']}) - {downloads} downloads\n"
-
-        # Split long messages
-        if len(users_text) > 4000:
-            users_text = users_text[:4000] + "...\n\nList truncated due to length"
-
-        await message.answer(users_text, parse_mode="Markdown")
-
-    except Exception as e:
-        await message.answer(f"Error getting users: {str(e)}")
-        logger.error(f"Users command error: {e}")
+        users_text = format_user_list(users)
+        await send_message_with_fallback(message.bot, message.chat.id, users_text, parse_mode="Markdown")
 
 
+@admin_required
+@handle_errors("Error getting stats")
 async def handle_stats_command(message: Message):
-    if not is_admin(message.from_user.id):
-        await message.answer("No access")
-        return
-
     try:
         stats = get_usage_stats()
 
@@ -158,10 +119,6 @@ For advanced stats, check paid branches
 """
 
         await message.answer(stats_message, parse_mode="Markdown")
-
-    except Exception as e:
-        await message.answer(f"Error getting stats: {str(e)}")
-        logger.error(f"Stats command error: {e}")
 
 
 def register_admin_handlers(dp):

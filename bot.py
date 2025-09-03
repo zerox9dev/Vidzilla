@@ -9,7 +9,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
-from handlers.admin import send_restart_notification
+from utils.bot_manager import send_restart_notification
 from handlers.handlers import register_handlers
 from handlers.admin import register_admin_handlers
 

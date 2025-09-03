@@ -19,41 +19,26 @@ def get_user_agent_instance():
             _ua = UserAgent(fallback='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
     return _ua
 
-def get_random_user_agent():
+def _get_user_agent_with_fallback(user_agent_type: str, default_fallback: str):
     try:
         ua = get_user_agent_instance()
-        return ua.random
+        return getattr(ua, user_agent_type)
     except Exception as e:
-        logger.warning(f"Failed to get random user agent: {e}")
-        # Fallback user agent
-        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        logger.warning(f"Failed to get {user_agent_type} user agent: {e}")
+        return default_fallback
+
+
+def get_random_user_agent():
+    return _get_user_agent_with_fallback('random', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
 
 def get_chrome_user_agent():
-    try:
-        ua = get_user_agent_instance()
-        return ua.chrome
-    except Exception as e:
-        logger.warning(f"Failed to get Chrome user agent: {e}")
-        # Fallback Chrome user agent
-        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    return _get_user_agent_with_fallback('chrome', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
 
 def get_firefox_user_agent():
-    try:
-        ua = get_user_agent_instance()
-        return ua.firefox
-    except Exception as e:
-        logger.warning(f"Failed to get Firefox user agent: {e}")
-        # Fallback Firefox user agent
-        return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0'
+    return _get_user_agent_with_fallback('firefox', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0')
 
 def get_safari_user_agent():
-    try:
-        ua = get_user_agent_instance()
-        return ua.safari
-    except Exception as e:
-        logger.warning(f"Failed to get Safari user agent: {e}")
-        # Fallback Safari user agent
-        return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+    return _get_user_agent_with_fallback('safari', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15')
 
 def get_platform_specific_user_agent(platform_name: str):
     # Use Chrome user agent for all platforms for maximum compatibility

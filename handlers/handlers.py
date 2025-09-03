@@ -10,11 +10,9 @@ from config import PLATFORM_IDENTIFIERS
 from handlers.social_media.video_processor import detect_platform_and_process
 from utils.user_management import (
     check_channel_subscription,
-    create_user,
-    get_user,
     increment_download_count,
-    update_user,
 )
+from utils.common_utils import ensure_user_exists, handle_errors
 
 
 class DownloadVideo(StatesGroup):
@@ -22,30 +20,20 @@ class DownloadVideo(StatesGroup):
 
 
 async def send_welcome(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    username = message.from_user.username
-    language_code = message.from_user.language_code
+    # Ensure user exists in database
+    ensure_user_exists(message)
 
-    # Get or create user
-    user = get_user(user_id)
-    if not user:
-        create_user(user_id, username, language_code)
-    else:
-        update_user(user_id, username, language_code)
-
-    welcome_text = f"Vidzilla\n\nSend video link"
+    welcome_text = "Vidzilla\n\nSend video link"
 
     await message.answer(welcome_text, parse_mode="Markdown")
 
 
+@handle_errors("Error\nTry another link")
 async def process_video_link(message: Message, state: FSMContext):
-    user_id = message.from_user.id
+    # Ensure user exists in database
+    user = ensure_user_exists(message)
+    user_id = user['user_id']
     url = message.text.strip()
-
-    # Check if user exists, create if not
-    user = get_user(user_id)
-    if not user:
-        create_user(user_id, message.from_user.username, message.from_user.language_code)
 
     # Check channel subscription (always returns True in FREE version)
     if not await check_channel_subscription(user_id, message.bot):
@@ -54,28 +42,22 @@ async def process_video_link(message: Message, state: FSMContext):
     # Send processing message
     progress_msg = await message.answer("Loading...")
 
-    try:
-        # Detect platform and process video
-        platform_detected = await detect_platform_and_process(
-            message, message.bot, url, progress_msg
+    # Detect platform and process video
+    platform_detected = await detect_platform_and_process(
+        message, message.bot, url, progress_msg
+    )
+
+    if not platform_detected:
+        # Platform not supported
+        supported_platforms = ', '.join(set(PLATFORM_IDENTIFIERS.values()))
+        await progress_msg.edit_text(
+            f"Platform not supported\n\n{supported_platforms}",
+            parse_mode="Markdown"
         )
+        return
 
-        if not platform_detected:
-            # Platform not supported
-            supported_platforms = ', '.join(set(PLATFORM_IDENTIFIERS.values()))
-            await progress_msg.edit_text(
-                f"Platform not supported\n\n{supported_platforms}",
-                parse_mode="Markdown"
-            )
-            return
-
-        # Increment download counter
-        increment_download_count(user_id)
-
-    except Exception as e:
-        error_message = "Error\nTry another link"
-        await progress_msg.edit_text(error_message, parse_mode="Markdown")
-        print(f"Error processing video: {e}")
+    # Increment download counter
+    increment_download_count(user_id)
 
 
 async def handle_help_command(message: Message):
