@@ -47,12 +47,6 @@ class BotManager:
                 logger.error(f"Failed to send message to admin {admin_id}: {e}")
 
     @classmethod
-    async def notify_restart(cls) -> None:
-        restart_message = "🤖 Bot has been restarted and is now online!"
-        await cls.send_to_admins(restart_message)
-        await cls.close_bot()
-
-    @classmethod
     async def send_admin_notification(cls, message: str, admin_id: int) -> bool:
         if admin_id not in ADMIN_IDS:
             logger.warning(f"Attempted to send admin notification to non-admin: {admin_id}")
@@ -71,10 +65,6 @@ class BotManager:
 # Convenience functions for backward compatibility
 def get_bot_instance() -> Bot:
     return BotManager.get_bot()
-
-
-async def send_restart_notification():
-    await BotManager.notify_restart()
 
 
 async def send_to_admins(message: str, exclude_admin_id: int = None):

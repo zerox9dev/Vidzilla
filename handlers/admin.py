@@ -16,7 +16,7 @@ from utils.user_management import (
     is_admin,
 )
 from utils.common_utils import admin_required, handle_errors, send_message_with_fallback, format_user_list
-from utils.bot_manager import send_restart_notification
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -24,9 +24,6 @@ logger = logging.getLogger(__name__)
 
 class AdminActions(StatesGroup):
     waiting_for_broadcast_message = State()
-
-
-
 
 
 @admin_required
@@ -137,7 +134,6 @@ def register_admin_handlers(dp):
 # Export functions for use in main handlers
 __all__ = [
     'AdminActions',
-    'send_restart_notification',
     'handle_admin_command',
     'handle_broadcast_command',
     'handle_broadcast_message',

@@ -9,7 +9,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
-from utils.bot_manager import send_restart_notification
+
 from handlers.handlers import register_handlers
 from handlers.admin import register_admin_handlers
 
@@ -74,12 +74,6 @@ class VidZillaBot:
         logger.info(f"Setting webhook to {webhook_url}")
         await self.bot.set_webhook(webhook_url)
         logger.info("Webhook set successfully")
-
-        # Send restart notification to admins
-        try:
-            await send_restart_notification()
-        except Exception as e:
-            logger.warning(f"Failed to send restart notification: {e}")
 
     async def _on_shutdown(self, app: web.Application) -> None:
         logger.info("Shutting down bot...")
