@@ -18,16 +18,30 @@ from utils.common_utils import safe_edit_message
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Check if ffmpeg is available
-def check_ffmpeg_available():
-    """Check if ffmpeg is installed and available"""
-    return shutil.which('ffmpeg') is not None
+# Check for ffmpeg (system or imageio-ffmpeg)
+FFMPEG_PATH = None
+FFMPEG_AVAILABLE = False
 
-FFMPEG_AVAILABLE = check_ffmpeg_available()
+# First, try imageio-ffmpeg (Python package)
+try:
+    import imageio_ffmpeg
+    FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+    FFMPEG_AVAILABLE = True
+    logger.info(f"Using imageio-ffmpeg: {FFMPEG_PATH}")
+except ImportError:
+    logger.debug("imageio-ffmpeg not installed")
+except Exception as e:
+    logger.debug(f"Error loading imageio-ffmpeg: {e}")
+
+# If imageio-ffmpeg not available, check system ffmpeg
 if not FFMPEG_AVAILABLE:
-    logger.warning("ffmpeg not found! Will use single-format downloads only.")
-else:
-    logger.info("ffmpeg is available")
+    system_ffmpeg = shutil.which('ffmpeg')
+    if system_ffmpeg:
+        FFMPEG_PATH = system_ffmpeg
+        FFMPEG_AVAILABLE = True
+        logger.info(f"Using system ffmpeg: {FFMPEG_PATH}")
+    else:
+        logger.warning("ffmpeg not found! Install with: pip install imageio-ffmpeg")
 
 # Telegram limits
 TELEGRAM_VIDEO_SIZE_LIMIT_MB = 50  # Telegram's video size limit
@@ -44,84 +58,71 @@ def get_file_size_mb(file_path: str) -> float:
         return 0.0
 
 
-class SimpleVideoDownloader:
+def get_ytdlp_options(output_path: str) -> dict:
+    """Get yt-dlp options for video download - following official documentation"""
+    options = {
+        'outtmpl': output_path,
+    }
+    
+    # Configure format based on ffmpeg availability
+    if FFMPEG_AVAILABLE:
+        # With ffmpeg: download and merge best video + audio streams
+        options['format'] = 'bestvideo+bestaudio/best'
+        options['merge_output_format'] = 'mp4'
+        options['ffmpeg_location'] = FFMPEG_PATH
+    else:
+        # Without ffmpeg: best quality video that MUST have audio
+        # Filters: vcodec!=none (has video) AND acodec!=none (has audio)
+        options['format'] = 'best[vcodec!=none][acodec!=none]/worst[vcodec!=none][acodec!=none]'
+    
+    return options
 
-    def __init__(self):
-        self.temp_dir = TEMP_DIRECTORY
-        os.makedirs(self.temp_dir, exist_ok=True)
 
-    def get_simple_ytdlp_options(self, output_path: str) -> dict:
-        # Choose format based on ffmpeg availability
-        if FFMPEG_AVAILABLE:
-            # Best video+audio merged (requires ffmpeg)
-            video_format = 'bv*+ba/b'
-        else:
-            # Single best format with both video and audio (no merging needed)
-            # Prioritize formats with both video and audio
-            video_format = 'best[ext=mp4]/best'
-        
-        options = {
-            'outtmpl': output_path,
-            'format': video_format,
-            'writeinfojson': False,
-            'writesubtitles': False,
-            'ignoreerrors': False,
-            'no_warnings': False,
-            'http_headers': {'User-Agent': get_random_user_agent()},
-            'extract_flat': False,
-            'writethumbnail': False,
-            'writeautomaticsub': False,
-        }
-        
-        # Only add merge options if ffmpeg is available
-        if FFMPEG_AVAILABLE:
-            options['merge_output_format'] = 'mp4'
-        
-        return options
+async def download_video(url: str, platform_name: str, user_id: int) -> Optional[str]:
+    """Download video using yt-dlp"""
+    os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+    
+    request_id = str(uuid.uuid4())[:8]
+    filename = f"{platform_name.lower()}_{user_id}_{request_id}.%(ext)s"
+    output_path = os.path.join(TEMP_DIRECTORY, filename)
 
-    async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
-        request_id = str(uuid.uuid4())[:8]
-        filename = f"{platform_name.lower()}_{user_id}_{request_id}.%(ext)s"
-        output_path = os.path.join(self.temp_dir, filename)
+    try:
+        logger.info(f"Downloading from {platform_name}: {url}")
 
-        try:
-            logger.info(f"Downloading from {platform_name}: {url}")
+        options = get_ytdlp_options(output_path)
 
-            options = self.get_simple_ytdlp_options(output_path)
+        def run_download():
+            with yt_dlp.YoutubeDL(options) as ydl:
+                ydl.download([url])
 
-            def run_download():
-                with yt_dlp.YoutubeDL(options) as ydl:
-                    ydl.download([url])
-
-                    # Find downloaded file
-                    base_path = output_path.replace('.%(ext)s', '')
-                    for ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov']:
-                        potential_path = base_path + ext
-                        if os.path.exists(potential_path):
-                            return potential_path
-                    return None
-
-            loop = asyncio.get_event_loop()
-            downloaded_path = await loop.run_in_executor(download_executor, run_download)
-
-            if downloaded_path and os.path.exists(downloaded_path):
-                file_size = get_file_size_mb(downloaded_path)
-                logger.info(f"Successfully downloaded {platform_name} video: {file_size:.2f}MB")
-                return downloaded_path
-            else:
-                logger.error(f"Failed to download {platform_name} video")
+                # Find downloaded file
+                base_path = output_path.replace('.%(ext)s', '')
+                for ext in ['.mp4', '.webm', '.mkv', '.avi', '.mov']:
+                    potential_path = base_path + ext
+                    if os.path.exists(potential_path):
+                        return potential_path
                 return None
 
-        except Exception as e:
-            logger.error(f"Error downloading {platform_name} video: {str(e)}")
+        loop = asyncio.get_event_loop()
+        downloaded_path = await loop.run_in_executor(download_executor, run_download)
+
+        if downloaded_path and os.path.exists(downloaded_path):
+            file_size = get_file_size_mb(downloaded_path)
+            logger.info(f"Successfully downloaded {platform_name} video: {file_size:.2f}MB")
+            return downloaded_path
+        else:
+            logger.error(f"Failed to download {platform_name} video")
             return None
+
+    except Exception as e:
+        logger.error(f"Error downloading {platform_name} video: {str(e)}")
+        return None
 
 
 
 
 
 async def process_social_media_video(message, bot, url, platform_name, progress_msg=None):
-    downloader = SimpleVideoDownloader()
     temp_video_path = None
 
     try:
@@ -130,7 +131,7 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
             await safe_edit_message(progress_msg, f"Downloading...")
 
         # Download video
-        temp_video_path = await downloader.download_video(url, platform_name, message.from_user.id)
+        temp_video_path = await download_video(url, platform_name, message.from_user.id)
 
         if not temp_video_path:
             raise Exception("Failed to download video")
