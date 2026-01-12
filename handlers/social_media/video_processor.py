@@ -3,10 +3,14 @@
 import asyncio
 import logging
 import os
+import re
 import tempfile
 import uuid
+import shutil
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
+import aiohttp
 import yt_dlp
 from aiogram.types import FSInputFile
 
@@ -17,8 +21,22 @@ from utils.common_utils import safe_edit_message
 # Set up logging
 logger = logging.getLogger(__name__)
 
+# Check if ffmpeg is available
+def check_ffmpeg_available():
+    """Check if ffmpeg is installed and available"""
+    return shutil.which('ffmpeg') is not None
+
+FFMPEG_AVAILABLE = check_ffmpeg_available()
+if not FFMPEG_AVAILABLE:
+    logger.warning("ffmpeg not found! Will use single-format downloads only.")
+else:
+    logger.info("ffmpeg is available")
+
 # Telegram limits
 TELEGRAM_VIDEO_SIZE_LIMIT_MB = 50  # Telegram's video size limit
+
+# Thread pool for downloads (max 10 concurrent downloads)
+download_executor = ThreadPoolExecutor(max_workers=10)
 
 
 def get_file_size_mb(file_path: str) -> float:
@@ -36,9 +54,18 @@ class SimpleVideoDownloader:
         os.makedirs(self.temp_dir, exist_ok=True)
 
     def get_simple_ytdlp_options(self, output_path: str) -> dict:
-        return {
+        # Choose format based on ffmpeg availability
+        if FFMPEG_AVAILABLE:
+            # Best video+audio merged (requires ffmpeg)
+            video_format = 'bv*+ba/b'
+        else:
+            # Single best format with both video and audio (no merging needed)
+            # Prioritize formats with both video and audio
+            video_format = 'best[ext=mp4]/best'
+        
+        options = {
             'outtmpl': output_path,
-            'format': 'best[ext=mp4]/best/worst',  # Simple format selection
+            'format': video_format,
             'writeinfojson': False,
             'writesubtitles': False,
             'ignoreerrors': False,
@@ -48,6 +75,12 @@ class SimpleVideoDownloader:
             'writethumbnail': False,
             'writeautomaticsub': False,
         }
+        
+        # Only add merge options if ffmpeg is available
+        if FFMPEG_AVAILABLE:
+            options['merge_output_format'] = 'mp4'
+        
+        return options
 
     async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
         request_id = str(uuid.uuid4())[:8]
@@ -72,7 +105,7 @@ class SimpleVideoDownloader:
                     return None
 
             loop = asyncio.get_event_loop()
-            downloaded_path = await loop.run_in_executor(None, run_download)
+            downloaded_path = await loop.run_in_executor(download_executor, run_download)
 
             if downloaded_path and os.path.exists(downloaded_path):
                 file_size = get_file_size_mb(downloaded_path)
@@ -84,7 +117,138 @@ class SimpleVideoDownloader:
 
         except Exception as e:
             logger.error(f"Error downloading {platform_name} video: {str(e)}")
+            
+            # Fallback for Instagram
+            if platform_name == "Instagram":
+                logger.info("Trying embed parser as fallback for Instagram")
+                try:
+                    downloaded_path = await self._download_instagram_embed(url, user_id, request_id)
+                    if downloaded_path:
+                        return downloaded_path
+                except Exception as embed_error:
+                    logger.error(f"Embed parser failed: {str(embed_error)}")
+            
             return None
+    
+    async def _download_instagram_embed(self, url: str, user_id: int, request_id: str) -> Optional[str]:
+        """Download Instagram video using embed page parsing (fallback method)"""
+        try:
+            # Extract shortcode from various Instagram URL formats
+            shortcode_match = (
+                re.search(r'/p/([^/?]+)', url) or 
+                re.search(r'/reel/([^/?]+)', url) or
+                re.search(r'/tv/([^/?]+)', url)
+            )
+            if not shortcode_match:
+                raise ValueError("Invalid Instagram URL")
+            
+            shortcode = shortcode_match.group(1)
+            
+            # Try multiple endpoints
+            urls_to_try = [
+                f"https://www.instagram.com/p/{shortcode}/embed/captioned/",
+                f"https://www.instagram.com/reel/{shortcode}/embed/captioned/",
+                f"https://www.instagram.com/p/{shortcode}/embed/",
+                f"https://www.instagram.com/reel/{shortcode}/embed/",
+            ]
+            
+            async with aiohttp.ClientSession() as session:
+                for embed_url in urls_to_try:
+                    try:
+                        logger.debug(f"Trying embed URL: {embed_url}")
+                        headers = {
+                            'User-Agent': get_random_user_agent(),
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.9',
+                            'Accept-Encoding': 'gzip, deflate, br',
+                            'Referer': 'https://www.instagram.com/',
+                        }
+                        
+                        async with session.get(embed_url, headers=headers, timeout=10) as response:
+                            if response.status != 200:
+                                logger.debug(f"Embed URL {embed_url} returned {response.status}")
+                                continue
+                            
+                            html = await response.text()
+                            
+                            # Expanded patterns to find video URL
+                            patterns = [
+                                r'"video_url"\s*:\s*"([^"]+)"',
+                                r'"videoUrl"\s*:\s*"([^"]+)"',
+                                r'<meta property="og:video" content="([^"]+)"',
+                                r'<meta property="og:video:secure_url" content="([^"]+)"',
+                                r'<video[^>]+src="([^"]+)"',
+                                r'"src"\s*:\s*"(https://[^"]*?cdninstagram[^"]*?\.mp4[^"]*?)"',
+                                r'VideoUrl&quot;:&quot;([^&]+)&quot;',
+                                r'"video_versions"\s*:\s*\[{"url"\s*:\s*"([^"]+)"',
+                                r'contentUrl":"([^"]+\.mp4[^"]*?)"',
+                            ]
+                            
+                            video_url = None
+                            for pattern in patterns:
+                                match = re.search(pattern, html)
+                                if match:
+                                    video_url = match.group(1)
+                                    # Clean up URL
+                                    video_url = (video_url
+                                        .replace('\\u0026', '&')
+                                        .replace('&amp;', '&')
+                                        .replace('\\/', '/')
+                                        .replace('\\/','/')
+                                    )
+                                    logger.info(f"Found video URL with pattern: {pattern[:40]}...")
+                                    break
+                            
+                            if not video_url:
+                                # Last resort: try to find any Instagram CDN mp4 URL
+                                mp4_matches = re.findall(
+                                    r'(https://[^\s"<>\\]*?(?:cdninstagram|fbcdn)[^\s"<>\\]*?\.mp4[^\s"<>\\]*)',
+                                    html
+                                )
+                                if mp4_matches:
+                                    video_url = mp4_matches[0].replace('\\/', '/').replace('\\', '')
+                                    logger.info("Found video URL from CDN mp4 search")
+                            
+                            if video_url:
+                                # Try to download the video
+                                output_path = os.path.join(self.temp_dir, f"instagram_{user_id}_{request_id}.mp4")
+                                
+                                logger.debug(f"Attempting to download from: {video_url[:100]}...")
+                                async with session.get(video_url, headers=headers, timeout=30) as video_response:
+                                    if video_response.status != 200:
+                                        logger.warning(f"Video download failed with status {video_response.status}")
+                                        continue
+                                    
+                                    content = await video_response.read()
+                                    if len(content) < 1000:  # Less than 1KB is probably an error
+                                        logger.warning(f"Downloaded content too small: {len(content)} bytes")
+                                        continue
+                                    
+                                    with open(output_path, 'wb') as f:
+                                        f.write(content)
+                                
+                                if os.path.exists(output_path):
+                                    file_size = get_file_size_mb(output_path)
+                                    if file_size > 0.01:  # At least 10KB
+                                        logger.info(f"Successfully downloaded Instagram via embed: {file_size:.2f}MB")
+                                        return output_path
+                                    else:
+                                        logger.warning(f"Downloaded file too small: {file_size}MB")
+                                        os.unlink(output_path)
+                                        
+                    except asyncio.TimeoutError:
+                        logger.debug(f"Timeout for {embed_url}")
+                        continue
+                    except Exception as e:
+                        logger.debug(f"Error with {embed_url}: {str(e)}")
+                        continue
+            
+            raise Exception("Could not find video URL in any embed page")
+            
+        except Exception as e:
+            logger.error(f"Instagram embed download failed: {str(e)}")
+            raise
+    
 
 
 

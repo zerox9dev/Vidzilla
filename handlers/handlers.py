@@ -21,7 +21,7 @@ class DownloadVideo(StatesGroup):
 
 async def send_welcome(message: Message, state: FSMContext):
     # Ensure user exists in database
-    ensure_user_exists(message)
+    await ensure_user_exists(message)
     welcome_text = "👋 Hi!\n\nI help you download videos and photos from Instagram, TikTok, YouTube and Pinterest —\nwithout watermarks and in the best quality!\n\n📎 Just send a link — and get video in a couple of seconds!\n\n🤖 Also check @ofaibot — AI GPT bot assistant!"
 
     await message.answer(welcome_text, parse_mode="Markdown")
@@ -30,7 +30,7 @@ async def send_welcome(message: Message, state: FSMContext):
 @handle_errors("Error\nTry another link")
 async def process_video_link(message: Message, state: FSMContext):
     # Ensure user exists in database
-    user = ensure_user_exists(message)
+    user = await ensure_user_exists(message)
     user_id = user['user_id']
     url = message.text.strip()
 
@@ -56,7 +56,7 @@ async def process_video_link(message: Message, state: FSMContext):
         return
 
     # Increment download counter
-    increment_download_count(user_id)
+    await increment_download_count(user_id)
 
 
 

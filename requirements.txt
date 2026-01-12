@@ -1,10 +1,9 @@
 aiogram==3.20.0.post0
 aiohttp==3.11.18
 python-dotenv==1.1.0
-asyncio==3.4.3
-pymongo==4.13.0
+motor==3.6.0
 requests==2.32.3
-
+ffmpeg
 aiofiles==24.1.0
 dnspython==2.7.0
 pydantic==2.11.5

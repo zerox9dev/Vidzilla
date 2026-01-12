@@ -55,19 +55,19 @@ def get_user_info_from_message(message: Message) -> dict:
     }
 
 
-def ensure_user_exists(message: Message) -> dict:
+async def ensure_user_exists(message: Message) -> dict:
     user_info = get_user_info_from_message(message)
     user_id = user_info['user_id']
     username = user_info['username']
     language_code = user_info['language_code']
 
     # Get or create user
-    user = get_user(user_id)
+    user = await get_user(user_id)
     if not user:
-        user = create_user(user_id, username, language_code)
+        user = await create_user(user_id, username, language_code)
         logger.info(f"Created new user: {user_id}")
     else:
-        update_user(user_id, username, language_code)
+        await update_user(user_id, username, language_code)
         logger.debug(f"Updated existing user: {user_id}")
 
     return user

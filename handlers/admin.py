@@ -29,7 +29,7 @@ class AdminActions(StatesGroup):
 @admin_required
 async def handle_admin_command(message: Message, state: FSMContext):
     # Get basic stats
-    stats = get_usage_stats()
+    stats = await get_usage_stats()
 
     admin_menu = f"""
 Admin Panel - FREE Version
@@ -90,7 +90,7 @@ Total: {successful_sends + failed_sends}
 @admin_required
 @handle_errors("Error getting users")
 async def handle_users_command(message: Message):
-    users = get_users_with_usernames()
+    users = await get_users_with_usernames()
     users_text = format_user_list(users)
     await send_message_with_fallback(message.bot, message.chat.id, users_text, parse_mode="Markdown")
 
@@ -98,7 +98,7 @@ async def handle_users_command(message: Message):
 @admin_required
 @handle_errors("Error getting stats")
 async def handle_stats_command(message: Message):
-    stats = get_usage_stats()
+    stats = await get_usage_stats()
 
     stats_message = f"""
 Bot Statistics - FREE Version

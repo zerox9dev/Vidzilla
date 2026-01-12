@@ -2,13 +2,15 @@
 
 import asyncio
 import logging
+import os
+import time
 from typing import Dict, Any
 
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
-from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
+from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST, TEMP_DIRECTORY
 
 from handlers.handlers import register_handlers
 from handlers.admin import register_admin_handlers
@@ -28,6 +30,7 @@ class VidZillaBot:
         self.dp: Dispatcher = None
         self.app: web.Application = None
         self.runner: web.AppRunner = None
+        self.cleanup_task: asyncio.Task = None
 
     async def _create_bot_and_dispatcher(self) -> None:
         self.bot = Bot(token=BOT_TOKEN)
@@ -74,12 +77,42 @@ class VidZillaBot:
         logger.info(f"Setting webhook to {webhook_url}")
         await self.bot.set_webhook(webhook_url)
         logger.info("Webhook set successfully")
+        
+        # Start cleanup task
+        self.cleanup_task = asyncio.create_task(self._cleanup_old_files())
+        logger.info("Cleanup task started")
 
     async def _on_shutdown(self, app: web.Application) -> None:
         logger.info("Shutting down bot...")
+        if self.cleanup_task:
+            self.cleanup_task.cancel()
         if self.bot:
             await self.bot.session.close()
         logger.info("Bot shutdown complete")
+    
+    async def _cleanup_old_files(self) -> None:
+        """Remove temp files older than 1 hour"""
+        while True:
+            try:
+                await asyncio.sleep(1800)  # Run every 30 minutes
+                if not os.path.exists(TEMP_DIRECTORY):
+                    continue
+                    
+                now = time.time()
+                cleaned = 0
+                for filename in os.listdir(TEMP_DIRECTORY):
+                    filepath = os.path.join(TEMP_DIRECTORY, filename)
+                    if os.path.isfile(filepath):
+                        if now - os.path.getmtime(filepath) > 3600:  # 1 hour
+                            os.unlink(filepath)
+                            cleaned += 1
+                
+                if cleaned > 0:
+                    logger.info(f"Cleaned up {cleaned} old temp files")
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Cleanup error: {e}")
 
     async def create_app(self) -> web.Application:
         await self._create_bot_and_dispatcher()
