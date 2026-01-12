@@ -110,7 +110,3 @@ async def broadcast_message_to_all_users(bot: Bot, message_text: str):
 # FREE version - no subscription checks, everyone has access
 async def check_channel_subscription(user_id, bot):
     return True
-
-
-def check_user_subscription(user_id, username=None, language=None):
-    return True

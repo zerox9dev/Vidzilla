@@ -60,12 +60,3 @@ class BotManager:
         except TelegramAPIError as e:
             logger.error(f"Failed to send admin notification to {admin_id}: {e}")
             return False
-
-
-# Convenience functions for backward compatibility
-def get_bot_instance() -> Bot:
-    return BotManager.get_bot()
-
-
-async def send_to_admins(message: str, exclude_admin_id: int = None):
-    await BotManager.send_to_admins(message, exclude_admin_id)
