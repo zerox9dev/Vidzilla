@@ -12,7 +12,6 @@ import yt_dlp
 from aiogram.types import FSInputFile
 
 from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS
-from utils.user_agent_utils import get_random_user_agent
 from utils.common_utils import safe_edit_message
 
 # Set up logging
