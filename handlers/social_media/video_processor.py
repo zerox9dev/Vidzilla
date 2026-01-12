@@ -61,6 +61,19 @@ def get_ytdlp_options(output_path: str) -> dict:
     """Get yt-dlp options for video download - following official documentation"""
     options = {
         'outtmpl': output_path,
+        'nocheckcertificate': True,  # Ignore SSL certificate errors
+        'geo_bypass': True,  # Bypass geo-restrictions
+        'retries': 3,  # Retry failed downloads
+        'fragment_retries': 3,  # Retry failed fragments
+        # Force IPv4 to avoid 403 errors
+        'force_ipv4': True,
+        # Use android client for YouTube to bypass PO Token requirement
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web'],
+                'player_skip': ['webpage', 'configs'],
+            }
+        },
     }
     
     # Configure format based on ffmpeg availability
@@ -145,7 +158,12 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         # Check Telegram size limit
         if file_size_mb > TELEGRAM_VIDEO_SIZE_LIMIT_MB:
             # Video is too large for Telegram
-            size_limit_message = f"Too large ({file_size_mb:.1f}MB)\nLimit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB}MB"
+            size_limit_message = (
+                f"⚠️ Video is too large for Telegram\n\n"
+                f"📊 Video size: {file_size_mb:.1f} MB\n"
+                f"📉 Telegram limit: {TELEGRAM_VIDEO_SIZE_LIMIT_MB} MB\n\n"
+                f"💡 Try a shorter video or lower quality link"
+            )
 
             if progress_msg:
                 await safe_edit_message(progress_msg, size_limit_message)
@@ -163,15 +181,22 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
 
         # Success message
         if progress_msg:
-            await safe_edit_message(progress_msg, f"Sent video & document! ({file_size_mb:.1f}MB)")
+            await safe_edit_message(progress_msg, f"✅ Sent successfully! ({file_size_mb:.1f} MB)")
 
         logger.info(f"{platform_name} video processed successfully")
 
     except Exception as e:
         logger.error(f"Error processing {platform_name} video: {str(e)}")
 
-        # Simple error message
-        error_message = "Error\nTry another link"
+        # User-friendly error message
+        error_message = (
+            f"❌ Failed to download video from {platform_name}\n\n"
+            f"Possible reasons:\n"
+            f"• Video is private or deleted\n"
+            f"• Platform blocking access\n"
+            f"• Invalid link format\n\n"
+            f"💡 Try another link or check if video is public"
+        )
 
         if progress_msg:
             await safe_edit_message(progress_msg, error_message)
