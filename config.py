@@ -12,6 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Временная директория для хранения загруженных видео
 TEMP_DIRECTORY = os.path.join(BASE_DIR, "temp_videos")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_MODE = os.getenv("BOT_MODE", "webhook").strip().lower()
 
 # Server configuration
 PORT = int(os.getenv("PORT", "8000"))  # Default port 8000 if not specified

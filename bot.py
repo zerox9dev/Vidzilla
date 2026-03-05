@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
-from config import BOT_TOKEN, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
+from config import BOT_TOKEN, BOT_MODE, WEBHOOK_PATH, WEBHOOK_URL, PORT, HOST
 
 from handlers.handlers import register_handlers
 from handlers.admin import register_admin_handlers
@@ -28,15 +28,15 @@ class VidZillaBot:
         self.dp: Dispatcher = None
         self.app: web.Application = None
         self.runner: web.AppRunner = None
+        self.mode = (BOT_MODE or "webhook").lower().strip()
+
+        if self.mode not in {"webhook", "polling"}:
+            logger.warning("Unknown BOT_MODE=%s. Falling back to 'webhook'.", self.mode)
+            self.mode = "webhook"
 
     async def _create_bot_and_dispatcher(self) -> None:
         self.bot = Bot(token=BOT_TOKEN)
         self.dp = Dispatcher()
-
-        # Clean up any existing webhooks
-        logger.info("Deleting existing webhook")
-        await self.bot.delete_webhook(drop_pending_updates=True)
-        logger.info("Webhook deleted")
 
     async def _register_handlers(self) -> None:
         register_handlers(self.dp)
@@ -89,20 +89,46 @@ class VidZillaBot:
         logger.info("Application created successfully")
         return self.app
 
+    async def _run_polling(self) -> None:
+        await self._create_bot_and_dispatcher()
+        await self._register_handlers()
+
+        logger.info("Polling mode: deleting existing webhook")
+        await self.bot.delete_webhook(drop_pending_updates=True)
+
+        logger.info("Starting long polling")
+        await self.dp.start_polling(
+            self.bot,
+            allowed_updates=self.dp.resolve_used_update_types()
+        )
+
     async def run(self) -> None:
         try:
-            app = await self.create_app()
-            self.runner = web.AppRunner(app)
-            await self.runner.setup()
+            if self.mode == "polling":
+                await self._run_polling()
+            else:
+                if not WEBHOOK_PATH or not WEBHOOK_URL:
+                    raise ValueError(
+                        "WEBHOOK_PATH and WEBHOOK_URL are required when BOT_MODE=webhook"
+                    )
 
-            site = web.TCPSite(self.runner, HOST, PORT)
-            logger.info(f"Starting web application on {HOST}:{PORT}")
-            await site.start()
+                app = await self.create_app()
 
-            logger.info("Vidzilla Bot - FREE Version started successfully!")
+                # Keep updates on Telegram side while renewing webhook.
+                logger.info("Webhook mode: deleting existing webhook")
+                await self.bot.delete_webhook(drop_pending_updates=False)
 
-            # Run forever
-            await asyncio.Event().wait()
+                self.runner = web.AppRunner(app)
+                await self.runner.setup()
+
+                site = web.TCPSite(self.runner, HOST, PORT)
+                logger.info(f"Starting web application on {HOST}:{PORT}")
+                await site.start()
+
+                logger.info("Vidzilla Bot - FREE Version started successfully!")
+
+                # Run forever
+                await asyncio.Event().wait()
 
         except KeyboardInterrupt:
             logger.info("Received shutdown signal")
@@ -116,11 +142,13 @@ class VidZillaBot:
         logger.info("Cleaning up resources...")
         if self.runner:
             await self.runner.cleanup()
+        if self.bot and not self.bot.session.closed:
+            await self.bot.session.close()
         logger.info("Cleanup complete")
 
 
 async def main() -> None:
-    logger.info("Starting Vidzilla Bot - FREE Version")
+    logger.info("Starting Vidzilla Bot - FREE Version in %s mode", (BOT_MODE or "webhook"))
 
     bot_app = VidZillaBot()
     try:

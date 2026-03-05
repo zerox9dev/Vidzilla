@@ -45,6 +45,16 @@ If you want to run the bot yourself:
    ```
 
 4. **Create .env file** with settings
+   - For polling mode:
+   ```env
+   BOT_MODE=polling
+   ```
+   - For webhook mode:
+   ```env
+   BOT_MODE=webhook
+   WEBHOOK_PATH=/webhook
+   WEBHOOK_URL=https://your-domain.com
+   ```
 5. **Run the bot:**
    ```bash
    python bot.py
