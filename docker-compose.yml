@@ -1,6 +1,9 @@
 services:
   vidzilla-bot:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vidzilla-bot:latest
     container_name: vidzilla-bot
     working_dir: /app
     environment:
@@ -14,10 +17,6 @@ services:
       MONGODB_DB_NAME: ${MONGODB_DB_NAME:-}
       MONGODB_USERS_COLLECTION: ${MONGODB_USERS_COLLECTION:-users}
       ADMIN_IDS: ${ADMIN_IDS:-}
-    volumes:
-      - ./:/app
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt && python bot.py"
     ports:
       - "${PORT:-8000}:${PORT:-8000}"
     restart: unless-stopped
