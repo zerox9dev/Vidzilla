@@ -5,6 +5,7 @@ import os
 import uuid
 from typing import Optional
 
+import aiohttp
 import yt_dlp
 from aiogram.types import FSInputFile
 
@@ -12,6 +13,7 @@ from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS, COOKIES_FILE, COOKIES_E
 from utils.user_agent_utils import get_random_user_agent
 from utils.common_utils import safe_edit_message
 from utils.cleanup import cleanup_temp_directory
+from extractors import get_extractor
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -79,6 +81,68 @@ class SimpleVideoDownloader:
         self.temp_dir = TEMP_DIRECTORY
         os.makedirs(self.temp_dir, exist_ok=True)
 
+    async def try_extractor(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
+        """Try Cobalt-style direct extraction before falling back to yt-dlp."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                extractor = get_extractor(platform_name, session)
+                if not extractor:
+                    return None
+
+                result = await extractor.extract(url)
+                if not result or not result.url:
+                    return None
+
+                # Download from direct URL
+                request_id = str(uuid.uuid4())[:8]
+                ext = "jpg" if result.is_photo else "mp4"
+                filename = f"{platform_name.lower()}_{user_id}_{request_id}.{ext}"
+                output_path = os.path.join(self.temp_dir, filename)
+
+                headers = result.headers or {}
+                if "User-Agent" not in headers and "user-agent" not in headers:
+                    headers["User-Agent"] = get_random_user_agent()
+
+                async with session.get(
+                    result.url,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=60),
+                ) as resp:
+                    if resp.status != 200:
+                        logger.warning(f"Extractor download HTTP {resp.status} for {result.url[:80]}")
+                        return None
+
+                    # Check content length if available
+                    content_length = resp.content_length
+                    if content_length and content_length > TELEGRAM_VIDEO_SIZE_LIMIT_MB * 1024 * 1024:
+                        logger.info(f"Extractor: file too large ({content_length} bytes), skipping")
+                        return None
+
+                    with open(output_path, "wb") as f:
+                        total = 0
+                        async for chunk in resp.content.iter_chunked(64 * 1024):
+                            f.write(chunk)
+                            total += len(chunk)
+                            # Safety limit: stop if exceeding 50MB
+                            if total > TELEGRAM_VIDEO_SIZE_LIMIT_MB * 1024 * 1024:
+                                logger.info("Extractor: exceeded size limit during download")
+                                os.unlink(output_path)
+                                return None
+
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    size_mb = get_file_size_mb(output_path)
+                    logger.info(
+                        f"Extractor: downloaded {platform_name} media: "
+                        f"{size_mb:.2f}MB via direct extraction"
+                    )
+                    return output_path
+                else:
+                    return None
+
+        except Exception as e:
+            logger.warning(f"Extractor failed for {platform_name}: {e}")
+            return None
+
     def get_simple_ytdlp_options(self, output_path: str, format_string: str) -> dict:
         opts = {
             'outtmpl': output_path,
@@ -116,7 +180,20 @@ class SimpleVideoDownloader:
         return opts
 
     async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
-        """Download video with retry logic — tries multiple format strings."""
+        """Download video: try direct extractor first, then yt-dlp fallback."""
+
+        # TRY 1: Cobalt-style direct extractor (fast, no yt-dlp overhead)
+        try:
+            extractor_path = await self.try_extractor(url, platform_name, user_id)
+            if extractor_path:
+                logger.info(f"Direct extractor succeeded for {platform_name}")
+                return extractor_path
+            else:
+                logger.info(f"Direct extractor returned nothing for {platform_name}, falling back to yt-dlp")
+        except Exception as e:
+            logger.info(f"Direct extractor error for {platform_name}: {e}, falling back to yt-dlp")
+
+        # TRY 2: yt-dlp fallback
         request_id = str(uuid.uuid4())[:8]
         filename = f"{platform_name.lower()}_{user_id}_{request_id}.%(ext)s"
         output_path = os.path.join(self.temp_dir, filename)
