@@ -124,20 +124,24 @@ class TwitterExtractor(BaseExtractor):
         return await self.fetch_json(url, headers=headers)
 
     async def _request_syndication(self, tweet_id: str) -> Optional[dict]:
-        """Fallback: use syndication API (like yt-dlp does)."""
-        # Token generation from Cobalt: ((id / 1e15) * PI).toString(36)
-        token_num = (int(tweet_id) / 1e15) * math.pi
-        # Convert to base36-ish string, removing dots and leading zeros
-        token = ""
-        try:
-            # Python doesn't have native base36 for floats, approximate it
-            import struct
-            token_str = format(abs(hash(str(token_num))), 'x')[:12]
-            token = token_str
-        except Exception:
-            token = str(abs(hash(str(token_num))))[:12]
+        """Use syndication API."""
+        # Token from Cobalt: ((id / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, '')
+        token_float = (int(tweet_id) / 1e15) * math.pi
+        # JS toString(36) for float — we approximate with hex of the hash
+        token = format(abs(hash(str(token_float))), 'x')[:12]
 
         url = f"https://cdn.syndication.twimg.com/tweet-result?id={tweet_id}&token={token}"
+        result = await self.fetch_json(url, headers={"user-agent": GENERIC_USER_AGENT})
+        if result:
+            return result
+
+        # Try without token
+        url2 = f"https://cdn.syndication.twimg.com/tweet-result?id={tweet_id}"
+        return await self.fetch_json(url2, headers={"user-agent": GENERIC_USER_AGENT})
+
+    async def _request_fxtwitter(self, tweet_id: str) -> Optional[dict]:
+        """Fallback: use fxtwitter API (public, no auth needed)."""
+        url = f"https://api.fxtwitter.com/status/{tweet_id}"
         return await self.fetch_json(url, headers={"user-agent": GENERIC_USER_AGENT})
 
     def _best_video_quality(self, variants: list) -> Optional[str]:
@@ -217,32 +221,57 @@ class TwitterExtractor(BaseExtractor):
 
         media = None
 
-        # Strategy 1: GraphQL API
+        # Strategy 1: Syndication API (more stable)
         try:
-            guest_token = await self._get_guest_token()
-            if guest_token:
-                data = await self._request_graphql(tweet_id, guest_token)
-                if data:
-                    media = self._extract_media_from_graphql(data, tweet_id)
-
-                # Retry with fresh token on failure
-                if not media:
-                    guest_token = await self._get_guest_token(force=True)
-                    if guest_token:
-                        data = await self._request_graphql(tweet_id, guest_token)
-                        if data:
-                            media = self._extract_media_from_graphql(data, tweet_id)
+            syn_data = await self._request_syndication(tweet_id)
+            if syn_data:
+                media = syn_data.get("mediaDetails")
+                if media:
+                    self.logger.info(f"Twitter: extracted via syndication")
         except Exception as e:
-            self.logger.debug(f"GraphQL failed: {e}")
+            self.logger.debug(f"Syndication failed: {e}")
 
-        # Strategy 2: Syndication API fallback
+        # Strategy 2: GraphQL API fallback
         if not media:
             try:
-                syn_data = await self._request_syndication(tweet_id)
-                if syn_data:
-                    media = syn_data.get("mediaDetails")
+                guest_token = await self._get_guest_token()
+                if guest_token:
+                    data = await self._request_graphql(tweet_id, guest_token)
+                    if data:
+                        media = self._extract_media_from_graphql(data, tweet_id)
+                        if media:
+                            self.logger.info(f"Twitter: extracted via GraphQL")
             except Exception as e:
-                self.logger.debug(f"Syndication failed: {e}")
+                self.logger.debug(f"GraphQL failed: {e}")
+
+        # Strategy 3: fxtwitter API (public proxy)
+        if not media:
+            try:
+                fx_data = await self._request_fxtwitter(tweet_id)
+                if fx_data and fx_data.get("tweet"):
+                    tweet_data = fx_data["tweet"]
+                    # fxtwitter returns direct video URL in media
+                    fx_media = tweet_data.get("media", {})
+                    videos = fx_media.get("videos", [])
+                    if videos:
+                        video_url = videos[0].get("url")
+                        if video_url:
+                            self.logger.info(f"Twitter: extracted via fxtwitter")
+                            return VideoResult(
+                                url=video_url,
+                                filename=f"twitter_{tweet_id}.mp4",
+                            )
+                    # Check for photos
+                    photos = fx_media.get("photos", [])
+                    if photos:
+                        photo_url = photos[0].get("url")
+                        if photo_url:
+                            return VideoResult(
+                                url=photo_url,
+                                filename=f"twitter_{tweet_id}.jpg",
+                            )
+            except Exception as e:
+                self.logger.debug(f"fxtwitter failed: {e}")
 
         if not media:
             return None
