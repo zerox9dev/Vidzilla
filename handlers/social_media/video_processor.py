@@ -67,7 +67,9 @@ def classify_download_error(error: Exception) -> str:
         return "⏳ Timeout — try again in a moment"
     elif 'copyright' in error_str or 'dmca' in error_str:
         return "🚫 This video was removed due to copyright"
-    elif 'unsupported' in error_str or 'no video' in error_str or 'unable to extract' in error_str:
+    elif 'no video' in error_str or 'no media' in error_str:
+        return "📝 This post doesn't contain a video"
+    elif 'unsupported' in error_str or 'unable to extract' in error_str:
         return "🚫 This platform blocked the download — try again later"
     else:
         # Show first 100 chars of error for debugging
