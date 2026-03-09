@@ -13,6 +13,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Временная директория для хранения загруженных видео
 TEMP_DIRECTORY = os.path.join(BASE_DIR, "temp_videos")
+
+# Cookies file for platforms that require login (Instagram, TikTok)
+# Export from browser using "Get cookies.txt" extension
+COOKIES_FILE = os.path.join(BASE_DIR, "cookies.txt")
+COOKIES_ENABLED = os.path.exists(COOKIES_FILE)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_MODE = os.getenv("BOT_MODE", "webhook").strip().lower()
 

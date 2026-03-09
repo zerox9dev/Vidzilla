@@ -8,7 +8,7 @@ from typing import Optional
 import yt_dlp
 from aiogram.types import FSInputFile
 
-from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS
+from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS, COOKIES_FILE, COOKIES_ENABLED
 from utils.user_agent_utils import get_random_user_agent
 from utils.common_utils import safe_edit_message
 from utils.cleanup import cleanup_temp_directory
@@ -49,8 +49,10 @@ def classify_download_error(error: Exception) -> str:
     """Classify a yt-dlp error into a user-friendly message."""
     error_str = str(error).lower()
 
-    if 'private' in error_str or 'login' in error_str or 'authentication' in error_str:
-        return "🔒 This video is private or requires login"
+    if 'private' in error_str:
+        return "🔒 This video is private"
+    if 'login' in error_str or 'authentication' in error_str or 'cookies' in error_str:
+        return "🔑 This platform requires login — try sending a different link or a public video"
     elif 'not found' in error_str or '404' in error_str or 'deleted' in error_str or 'does not exist' in error_str:
         return "❌ Video not found — it may have been deleted"
     elif 'age' in error_str or 'sign in' in error_str or 'confirm your age' in error_str:
@@ -78,7 +80,7 @@ class SimpleVideoDownloader:
         os.makedirs(self.temp_dir, exist_ok=True)
 
     def get_simple_ytdlp_options(self, output_path: str, format_string: str) -> dict:
-        return {
+        opts = {
             'outtmpl': output_path,
             'format': format_string,
             'writeinfojson': False,
@@ -100,7 +102,18 @@ class SimpleVideoDownloader:
             'no_color': True,
             'geo_bypass': True,
             'nocheckcertificate': True,
+            'extractor_args': {
+                'youtube': {'player_client': ['ios', 'web']},
+                'tiktok': {'api_hostname': ['api22-normal-c-useast2a.tiktokv.com']},
+            },
         }
+
+        # Add cookies if available (needed for Instagram, TikTok login-required content)
+        if COOKIES_ENABLED:
+            opts['cookiefile'] = COOKIES_FILE
+            logger.info("Using cookies file for authentication")
+
+        return opts
 
     async def download_video(self, url: str, platform_name: str, user_id: int) -> Optional[str]:
         """Download video with retry logic — tries multiple format strings."""

@@ -83,3 +83,4 @@ test.py
 # Backup files
 *.bak
 *.backup
+cookies.txt
