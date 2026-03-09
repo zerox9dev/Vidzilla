@@ -12,6 +12,14 @@ from utils.user_management import is_admin, get_user, create_user, update_user
 logger = logging.getLogger(__name__)
 
 
+class VideoDownloadError(Exception):
+    """Custom exception for video download errors with user-friendly messages."""
+    def __init__(self, user_message: str, original_error: Exception = None):
+        self.user_message = user_message
+        self.original_error = original_error
+        super().__init__(user_message)
+
+
 def admin_required(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(message: Message, *args, **kwargs):
@@ -22,15 +30,21 @@ def admin_required(func: Callable) -> Callable:
     return wrapper
 
 
-def handle_errors(error_message: str = "Error\nTry again"):
+def handle_errors(error_message: str = "⚠️ Something went wrong. Try again."):
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(message: Message, *args, **kwargs):
             try:
                 return await func(message, *args, **kwargs)
+            except VideoDownloadError as e:
+                # Pass through specific video download errors with their user-friendly messages
+                logger.warning(f"Video download error in {func.__name__}: {e.user_message}")
+                if e.original_error:
+                    logger.error(f"Original error: {e.original_error}")
+                await message.answer(e.user_message)
             except Exception as e:
-                logger.error(f"Error in {func.__name__}: {e}")
-                await message.answer(error_message, parse_mode="Markdown")
+                logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
+                await message.answer(error_message)
         return wrapper
     return decorator
 

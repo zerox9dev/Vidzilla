@@ -1,6 +1,8 @@
 # config.py
 
 import os
+import re
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -30,20 +32,35 @@ MONGODB_USERS_COLLECTION = os.getenv("MONGODB_USERS_COLLECTION")
 ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
 
 
-
 # Dictionary for identifying platform based on URL - Top 10 most popular platforms
 PLATFORM_IDENTIFIERS = {
     # Top Social Media & Video Platforms (by global usage)
+    "youtube.com/shorts": "YouTube",   # YouTube Shorts (before youtube.com)
     "youtube.com": "YouTube",
     "youtu.be": "YouTube",
+    "instagram.com/reel": "Instagram", # Instagram Reels (before instagram.com)
     "instagram.com": "Instagram",
+    "vm.tiktok.com": "TikTok",        # TikTok short links
     "tiktok.com": "TikTok",
     "facebook.com": "Facebook",
     "fb.com": "Facebook",
+    "fb.watch": "Facebook",            # Facebook short links
     "twitter.com": "Twitter",
     "x.com": "Twitter",
+    "t.co": "Twitter",                 # Twitter short links
     "pinterest.com": "Pinterest",
     "pin.it": "Pinterest",
     "reddit.com": "Reddit",
+    "redd.it": "Reddit",               # Reddit short links
     "vimeo.com": "Vimeo",
 }
+
+
+# URL validation
+URL_PATTERN = re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+')
+
+
+def extract_url(text: str) -> Optional[str]:
+    """Extract the first URL from text."""
+    match = URL_PATTERN.search(text)
+    return match.group(0) if match else None
