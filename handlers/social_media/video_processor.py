@@ -12,7 +12,6 @@ from config import (
     COBALT_API_URL,
     COBALT_API_KEY,
 )
-from utils.user_agent_utils import get_random_user_agent
 from utils.common_utils import safe_edit_message
 from utils.cleanup import cleanup_temp_directory
 from utils.ads import GEO_BLOCK_AD
@@ -21,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_VIDEO_SIZE_LIMIT_MB = 50
 TELEGRAM_VIDEO_SIZE_LIMIT_BYTES = TELEGRAM_VIDEO_SIZE_LIMIT_MB * 1024 * 1024
+DOWNLOAD_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+)
 
 PROGRESS_MESSAGES = {
     'downloading': '⬇️ Downloading from {platform}...',
@@ -190,7 +193,7 @@ async def download_to_file(
 ) -> bool:
     """Stream download to file. Returns False if exceeds size limit, raises on other errors."""
     headers = dict(extra_headers or {})
-    headers.setdefault("User-Agent", get_random_user_agent())
+    headers.setdefault("User-Agent", DOWNLOAD_USER_AGENT)
 
     async with session.get(
         url,
