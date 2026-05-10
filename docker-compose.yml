@@ -6,6 +6,8 @@ services:
     image: vidzilla-bot:latest
     container_name: vidzilla-bot
     working_dir: /app
+    depends_on:
+      - cobalt-api
     environment:
       BOT_TOKEN: ${BOT_TOKEN:-}
       BOT_MODE: ${BOT_MODE:-polling}
@@ -17,6 +19,8 @@ services:
       MONGODB_DB_NAME: ${MONGODB_DB_NAME:-}
       MONGODB_USERS_COLLECTION: ${MONGODB_USERS_COLLECTION:-users}
       ADMIN_IDS: ${ADMIN_IDS:-}
+      COBALT_API_URL: ${COBALT_API_URL:-http://cobalt-api:9000/}
+      COBALT_API_KEY: ${COBALT_API_KEY:-}
     ports:
       - "${PORT:-8000}:${PORT:-8000}"
     restart: unless-stopped
@@ -26,3 +30,15 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+  cobalt-api:
+    image: ghcr.io/imputnet/cobalt:11
+    init: true
+    read_only: true
+    container_name: cobalt-api
+    restart: unless-stopped
+    environment:
+      API_URL: "http://cobalt-api:9000/"
+      DURATION_LIMIT: 10800
+    ports:
+      - "127.0.0.1:9000:9000"

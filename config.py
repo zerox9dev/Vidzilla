@@ -36,6 +36,10 @@ MONGODB_USERS_COLLECTION = os.getenv("MONGODB_USERS_COLLECTION")
 # User management configuration
 ADMIN_IDS = list(map(int, filter(None, os.getenv("ADMIN_IDS", "").split(","))))
 
+# Cobalt API
+COBALT_API_URL = os.getenv("COBALT_API_URL", "http://cobalt-api:9000/").rstrip("/") + "/"
+COBALT_API_KEY = os.getenv("COBALT_API_KEY", "").strip()
+
 
 # Dictionary for identifying platform based on URL - Top 10 most popular platforms
 PLATFORM_IDENTIFIERS = {
