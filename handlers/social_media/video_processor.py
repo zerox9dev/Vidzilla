@@ -48,6 +48,45 @@ def get_file_size_mb(file_path: str) -> float:
         return 0.0
 
 
+def probe_video(file_path: str) -> dict:
+    """Return {width, height, duration} via ffprobe, or {} on failure."""
+    import json
+    import subprocess
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error",
+                "-select_streams", "v:0",
+                "-show_entries", "stream=width,height:format=duration",
+                "-of", "json",
+                file_path,
+            ],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0:
+            return {}
+        data = json.loads(result.stdout or "{}")
+        stream = (data.get("streams") or [{}])[0]
+        fmt = data.get("format") or {}
+        width = stream.get("width")
+        height = stream.get("height")
+        duration = fmt.get("duration")
+        out = {}
+        if isinstance(width, int) and width > 0:
+            out["width"] = width
+        if isinstance(height, int) and height > 0:
+            out["height"] = height
+        if duration:
+            try:
+                out["duration"] = int(float(duration))
+            except (TypeError, ValueError):
+                pass
+        return out
+    except Exception as e:
+        logger.debug(f"ffprobe failed for {file_path}: {e}")
+        return {}
+
+
 def classify_download_error(error: Exception) -> str:
     """Classify a yt-dlp error into a user-friendly message."""
     error_str = str(error).lower()
@@ -374,15 +413,21 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
     errors = []
     video_message = None
 
+    # Probe video metadata so Telegram renders correct aspect ratio
+    meta = probe_video(video_path)
+
     # Send as video first
     try:
         video_file = FSInputFile(video_path)
         video_message = await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
-            supports_streaming=True
+            supports_streaming=True,
+            width=meta.get("width"),
+            height=meta.get("height"),
+            duration=meta.get("duration"),
         )
-        logger.info("Video sent successfully")
+        logger.info(f"Video sent successfully (meta: {meta})")
         video_sent = True
     except Exception as video_error:
         logger.warning(f"Failed to send as video: {video_error}")
