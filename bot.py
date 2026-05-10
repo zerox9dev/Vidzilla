@@ -43,8 +43,9 @@ class VidZillaBot:
         self.dp = Dispatcher()
 
     async def _register_handlers(self) -> None:
-        register_handlers(self.dp)
+        # Order matters: specific commands first, fallback last
         register_admin_handlers(self.dp)
+        register_handlers(self.dp)
         logger.info("All handlers registered")
 
     async def _create_web_app(self) -> None:
