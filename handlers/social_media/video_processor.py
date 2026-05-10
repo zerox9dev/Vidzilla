@@ -48,6 +48,45 @@ def get_file_size_mb(file_path: str) -> float:
         return 0.0
 
 
+def generate_thumbnail(video_path: str) -> Optional[str]:
+    """Extract a JPG frame at ~1s for use as Telegram thumbnail. Returns path or None."""
+    import subprocess
+    thumb_path = video_path.rsplit(".", 1)[0] + "_thumb.jpg"
+    try:
+        result = subprocess.run(
+            [
+                "ffmpeg", "-y", "-loglevel", "error",
+                "-ss", "1",
+                "-i", video_path,
+                "-frames:v", "1",
+                "-vf", "scale='min(320,iw)':-2",
+                "-q:v", "5",
+                thumb_path,
+            ],
+            capture_output=True, timeout=15,
+        )
+        if result.returncode == 0 and os.path.exists(thumb_path) and os.path.getsize(thumb_path) > 0:
+            return thumb_path
+        # Retry from frame 0 (very short videos)
+        result = subprocess.run(
+            [
+                "ffmpeg", "-y", "-loglevel", "error",
+                "-i", video_path,
+                "-frames:v", "1",
+                "-vf", "scale='min(320,iw)':-2",
+                "-q:v", "5",
+                thumb_path,
+            ],
+            capture_output=True, timeout=15,
+        )
+        if result.returncode == 0 and os.path.exists(thumb_path) and os.path.getsize(thumb_path) > 0:
+            return thumb_path
+        return None
+    except Exception as e:
+        logger.debug(f"thumbnail generation failed for {video_path}: {e}")
+        return None
+
+
 def probe_video(file_path: str) -> dict:
     """Return {width, height, duration} via ffprobe, or {} on failure."""
     import json
@@ -415,10 +454,12 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
 
     # Probe video metadata so Telegram renders correct aspect ratio
     meta = probe_video(video_path)
+    thumb_path = generate_thumbnail(video_path)
 
     # Send as video first
     try:
         video_file = FSInputFile(video_path)
+        thumbnail = FSInputFile(thumb_path) if thumb_path else None
         video_message = await bot.send_video(
             chat_id=message.chat.id,
             video=video_file,
@@ -426,8 +467,9 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
             width=meta.get("width"),
             height=meta.get("height"),
             duration=meta.get("duration"),
+            thumbnail=thumbnail,
         )
-        logger.info(f"Video sent successfully (meta: {meta})")
+        logger.info(f"Video sent successfully (meta: {meta}, thumb: {bool(thumb_path)})")
         video_sent = True
     except Exception as video_error:
         logger.warning(f"Failed to send as video: {video_error}")
@@ -465,6 +507,13 @@ async def send_video_with_fallback(bot, message, video_path: str, platform_name:
         logger.info("Video sent successfully as video only")
     elif document_sent:
         logger.info("Video sent successfully as document only")
+
+    # Clean up thumbnail
+    if thumb_path and os.path.exists(thumb_path):
+        try:
+            os.unlink(thumb_path)
+        except Exception:
+            pass
 
 
 async def detect_platform_and_process(message, bot, url, progress_msg=None):
