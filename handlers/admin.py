@@ -60,29 +60,38 @@ async def handle_broadcast_command(message: Message, state: FSMContext):
 @admin_required
 async def handle_broadcast_message(message: Message, state: FSMContext):
     broadcast_text = message.text
-    await message.answer("Broadcasting message to all users...")
-
-    # Get bot instance
     bot = message.bot
 
+    progress_msg = await message.answer("📡 Broadcasting...\nProgress will update every 500 users.")
+
+    async def on_progress(sent: int, total: int, ok: int):
+        try:
+            await progress_msg.edit_text(
+                f"📡 Broadcasting...\n{sent}/{total} processed · {ok} delivered"
+            )
+        except Exception:
+            pass
+
     try:
-        successful_sends, failed_sends = await broadcast_message_to_all_users(bot, broadcast_text)
+        successful, blocked, failed = await broadcast_message_to_all_users(
+            bot, broadcast_text, parse_mode="HTML", progress_callback=on_progress
+        )
 
-        result_message = f"""
-Broadcast Complete
-
-Results:
-Successful: {successful_sends}
-Failed: {failed_sends}
-Total: {successful_sends + failed_sends}
-"""
-
-        await message.answer(result_message, parse_mode="Markdown")
-        logger.info(f"Broadcast completed: {successful_sends} successful, {failed_sends} failed")
+        result = (
+            f"✅ Broadcast complete\n\n"
+            f"Delivered: {successful}\n"
+            f"Blocked the bot: {blocked}\n"
+            f"Failed: {failed}\n"
+            f"Total: {successful + blocked + failed}"
+        )
+        await progress_msg.edit_text(result)
+        logger.info(
+            f"Broadcast: ok={successful} blocked={blocked} failed={failed}"
+        )
 
     except Exception as e:
-        await message.answer(f"Broadcast failed: {str(e)}")
-        logger.error(f"Broadcast error: {e}")
+        await message.answer(f"Broadcast failed: {e}")
+        logger.error(f"Broadcast error: {e}", exc_info=True)
 
     await state.clear()
 

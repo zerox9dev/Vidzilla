@@ -1,10 +1,16 @@
 # user_management.py - FREE version (with MongoDB resilience)
 
+import asyncio
 import logging
 from datetime import datetime
+from typing import Callable, Optional
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramAPIError
+from aiogram.exceptions import (
+    TelegramAPIError,
+    TelegramForbiddenError,
+    TelegramRetryAfter,
+)
 
 from config import (
     ADMIN_IDS,
@@ -123,23 +129,59 @@ def get_usage_stats():
     return _db_op(_stats, default={"total_users": 0, "total_downloads": 0})
 
 
-async def broadcast_message_to_all_users(bot: Bot, message_text: str):
+async def broadcast_message_to_all_users(
+    bot: Bot,
+    message_text: str,
+    parse_mode: Optional[str] = None,
+    rate_per_second: int = 25,
+    progress_callback: Optional[Callable[[int, int, int], "asyncio.Future"]] = None,
+):
+    """Throttled broadcast respecting Telegram limits (~30 msg/s global).
+
+    Returns (successful, blocked, failed). 'blocked' = users who blocked the bot.
+    """
     if not _db_available or users_collection is None:
-        return 0, 0
+        return 0, 0, 0
 
-    users = users_collection.find({}, {"user_id": 1})
-    successful_sends = 0
-    failed_sends = 0
+    user_ids = [u["user_id"] for u in users_collection.find({}, {"user_id": 1})]
+    total = len(user_ids)
+    delay = 1.0 / max(1, rate_per_second)
 
-    for user in users:
+    successful = 0
+    blocked = 0
+    failed = 0
+
+    for idx, user_id in enumerate(user_ids, 1):
         try:
-            await bot.send_message(user["user_id"], message_text)
-            successful_sends += 1
+            await bot.send_message(user_id, message_text, parse_mode=parse_mode)
+            successful += 1
+        except TelegramRetryAfter as e:
+            # Telegram explicitly told us to wait
+            wait = e.retry_after + 1
+            logger.warning(f"Hit rate limit, sleeping {wait}s")
+            await asyncio.sleep(wait)
+            try:
+                await bot.send_message(user_id, message_text, parse_mode=parse_mode)
+                successful += 1
+            except Exception as e2:
+                failed += 1
+                logger.warning(f"Retry failed for {user_id}: {e2}")
+        except TelegramForbiddenError:
+            # User blocked the bot or deleted account
+            blocked += 1
         except TelegramAPIError as e:
-            failed_sends += 1
-            logger.warning(f"Failed to send message to {user['user_id']}: {e}")
+            failed += 1
+            logger.warning(f"Failed to send to {user_id}: {e}")
 
-    return successful_sends, failed_sends
+        if progress_callback and idx % 500 == 0:
+            try:
+                await progress_callback(idx, total, successful)
+            except Exception as e:
+                logger.debug(f"progress_callback failed: {e}")
+
+        await asyncio.sleep(delay)
+
+    return successful, blocked, failed
 
 
 # FREE version - no subscription checks, everyone has access
