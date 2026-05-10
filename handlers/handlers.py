@@ -35,6 +35,10 @@ async def send_welcome(message: Message, state: FSMContext):
     await message.answer(welcome_text, disable_web_page_preview=True)
 
 
+async def send_hint(message: Message, state: FSMContext):
+    await message.answer("🔗 Send me a video link to download")
+
+
 @handle_errors("⚠️ Something went wrong. Try again.")
 async def process_video_link(message: Message, state: FSMContext):
     # Ensure user exists in database
@@ -92,7 +96,7 @@ def register_handlers(dp):
     dp.message.register(process_video_link, F.text.regexp(r'https?://'))
 
     # Fallback for other messages
-    dp.message.register(send_welcome)
+    dp.message.register(send_hint)
 
     print("Main handlers registered")
 
@@ -101,6 +105,7 @@ def register_handlers(dp):
 __all__ = [
     'DownloadVideo',
     'send_welcome',
+    'send_hint',
     'process_video_link',
     'register_handlers'
 ]

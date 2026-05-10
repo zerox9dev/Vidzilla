@@ -73,9 +73,7 @@ def classify_download_error(error: Exception) -> str:
     elif 'unsupported' in error_str or 'unable to extract' in error_str:
         return "🚫 This platform blocked the download — try again later"
     else:
-        # Show first 100 chars of error for debugging
-        short = str(error)[:100]
-        return f"⚠️ Download failed: {short}"
+        return "⚠️ Couldn't download this one — try again or send another link"
 
 
 class SimpleVideoDownloader:
@@ -347,8 +345,7 @@ async def process_social_media_video(message, bot, url, platform_name, progress_
         elif 'failed to download' in error_str:
             error_message = "⚠️ Download failed — please try another link"
         else:
-            short = str(e)[:100]
-            error_message = f"⚠️ Something went wrong. Error: {short}"
+            error_message = "⚠️ Something went wrong — please try again"
 
         if progress_msg:
             await safe_edit_message(progress_msg, error_message)

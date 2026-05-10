@@ -61,6 +61,7 @@ class VidZillaBot:
 
         # Add routes
         self.app.router.add_get("/", self._handle_root)
+        self.app.router.add_get("/health", self._handle_health)
         self.app.router.add_get(WEBHOOK_PATH, self._handle_webhook_status)
 
         # Setup lifecycle handlers
@@ -69,6 +70,9 @@ class VidZillaBot:
 
     async def _handle_root(self, request: web.Request) -> web.Response:
         return web.Response(text="Vidzilla Bot - FREE Version is running!")
+
+    async def _handle_health(self, request: web.Request) -> web.Response:
+        return web.json_response({"status": "ok"})
 
     async def _handle_webhook_status(self, request: web.Request) -> web.Response:
         return web.Response(text="Webhook is active and working")
@@ -93,9 +97,24 @@ class VidZillaBot:
         logger.info("Application created successfully")
         return self.app
 
+    async def _start_health_server(self) -> None:
+        async def health(_request: web.Request) -> web.Response:
+            return web.json_response({"status": "ok"})
+
+        app = web.Application()
+        app.router.add_get("/health", health)
+        app.router.add_get("/", health)
+
+        self.runner = web.AppRunner(app)
+        await self.runner.setup()
+        site = web.TCPSite(self.runner, HOST, PORT)
+        await site.start()
+        logger.info(f"Health endpoint listening on {HOST}:{PORT}/health")
+
     async def _run_polling(self) -> None:
         await self._create_bot_and_dispatcher()
         await self._register_handlers()
+        await self._start_health_server()
 
         logger.info("Polling mode: deleting existing webhook")
         await self.bot.delete_webhook(drop_pending_updates=True)
