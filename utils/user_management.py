@@ -133,6 +133,7 @@ async def broadcast_message_to_all_users(
     bot: Bot,
     message_text: str,
     parse_mode: Optional[str] = None,
+    reply_markup=None,
     rate_per_second: int = 25,
     progress_callback: Optional[Callable[[int, int, int], "asyncio.Future"]] = None,
 ):
@@ -153,7 +154,7 @@ async def broadcast_message_to_all_users(
 
     for idx, user_id in enumerate(user_ids, 1):
         try:
-            await bot.send_message(user_id, message_text, parse_mode=parse_mode)
+            await bot.send_message(user_id, message_text, parse_mode=parse_mode, reply_markup=reply_markup, disable_web_page_preview=True)
             successful += 1
         except TelegramRetryAfter as e:
             # Telegram explicitly told us to wait
@@ -161,7 +162,7 @@ async def broadcast_message_to_all_users(
             logger.warning(f"Hit rate limit, sleeping {wait}s")
             await asyncio.sleep(wait)
             try:
-                await bot.send_message(user_id, message_text, parse_mode=parse_mode)
+                await bot.send_message(user_id, message_text, parse_mode=parse_mode, reply_markup=reply_markup, disable_web_page_preview=True)
                 successful += 1
             except Exception as e2:
                 failed += 1

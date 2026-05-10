@@ -6,7 +6,7 @@ import logging
 from aiogram import Bot, types
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config import ADMIN_IDS, BOT_TOKEN
 from utils.user_management import (
@@ -73,8 +73,17 @@ async def handle_broadcast_message(message: Message, state: FSMContext):
             pass
 
     try:
+        # Attach a CTA button to every broadcast
+        markup = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🌐 Open free VPN bot", url="https://t.me/zero_xvpnbot"),
+        ]])
+
         successful, blocked, failed = await broadcast_message_to_all_users(
-            bot, broadcast_text, parse_mode="HTML", progress_callback=on_progress
+            bot,
+            broadcast_text,
+            parse_mode="HTML",
+            reply_markup=markup,
+            progress_callback=on_progress,
         )
 
         result = (
