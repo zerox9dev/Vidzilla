@@ -13,6 +13,7 @@ from config import TEMP_DIRECTORY, PLATFORM_IDENTIFIERS, COOKIES_FILE, COOKIES_E
 from utils.user_agent_utils import get_random_user_agent
 from utils.common_utils import safe_edit_message
 from utils.cleanup import cleanup_temp_directory
+from utils.ads import GEO_BLOCK_AD
 from extractors import get_extractor
 
 # Set up logging
@@ -60,7 +61,7 @@ def classify_download_error(error: Exception) -> str:
     elif 'age' in error_str or 'sign in' in error_str or 'confirm your age' in error_str:
         return "🔞 Age-restricted content — can't download"
     elif 'geo' in error_str or 'country' in error_str or 'not available' in error_str or 'blocked' in error_str:
-        return "🌍 This video is not available in our region"
+        return "🌍 This video is not available in our region" + GEO_BLOCK_AD
     elif 'rate' in error_str or 'too many' in error_str or '429' in error_str:
         return "⏳ Too many requests — try again in a minute"
     elif 'timed out' in error_str or 'timeout' in error_str or 'urlopen error' in error_str:

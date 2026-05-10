@@ -56,7 +56,7 @@ async def safe_edit_message(progress_msg, new_text: str):
     try:
         if hasattr(progress_msg, "text") and progress_msg.text == new_text:
             return
-        await progress_msg.edit_text(new_text)
+        await progress_msg.edit_text(new_text, disable_web_page_preview=True)
     except Exception as e:
         logger.debug(f"Message edit failed: {e}")
 

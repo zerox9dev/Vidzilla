@@ -14,6 +14,7 @@ from utils.user_management import (
 )
 from utils.common_utils import ensure_user_exists, handle_errors
 from utils.rate_limiter import rate_limiter
+from utils.ads import WELCOME_AD, PERIODIC_AD, should_show_periodic_ad
 
 
 class DownloadVideo(StatesGroup):
@@ -28,9 +29,10 @@ async def send_welcome(message: Message, state: FSMContext):
         "I download videos from Instagram, TikTok, YouTube, Pinterest, "
         "Facebook, Twitter, Reddit and Vimeo.\n\n"
         "📎 Just send a link!"
+        + WELCOME_AD
     )
 
-    await message.answer(welcome_text)
+    await message.answer(welcome_text, disable_web_page_preview=True)
 
 
 @handle_errors("⚠️ Something went wrong. Try again.")
@@ -72,7 +74,11 @@ async def process_video_link(message: Message, state: FSMContext):
         return
 
     # Increment download counter
-    increment_download_count(user_id)
+    new_count = increment_download_count(user_id)
+
+    # Show VPN ad every Nth successful download
+    if should_show_periodic_ad(new_count):
+        await message.answer(PERIODIC_AD, disable_web_page_preview=True)
 
 
 def register_handlers(dp):

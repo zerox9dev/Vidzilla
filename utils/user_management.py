@@ -82,10 +82,14 @@ def update_user(user_id, username=None, language=None):
 
 
 def increment_download_count(user_id):
-    _db_op(lambda: users_collection.update_one(
+    doc = _db_op(lambda: users_collection.find_one_and_update(
         {"user_id": user_id},
-        {"$inc": {"downloads_count": 1}}
+        {"$inc": {"downloads_count": 1}},
+        return_document=True,
     ))
+    if doc and "downloads_count" in doc:
+        return doc["downloads_count"]
+    return 0
 
 
 def is_admin(user_id):
