@@ -1,3 +1,5 @@
+
+
 # Vidzilla 🤖
 
 **Telegram bot for downloading videos from social media — powered by self-hosted [Cobalt](https://github.com/imputnet/cobalt).**
@@ -27,7 +29,7 @@ Telegram ─┬──► vidzilla-bot ──► cobalt-api (POST /)
           │         │                ▼
           │         │        media URL (tunnel/redirect)
           │         ▼
-          │    download to /tmp
+          │    download to temp_videos/
           │    ffprobe + ffmpeg thumbnail
           ▼
        send_video + send_document
