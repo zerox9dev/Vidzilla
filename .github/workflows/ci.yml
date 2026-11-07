@@ -59,3 +59,37 @@ jobs:
           package-name: vidzilla-bot
           package-type: container
           min-versions-to-keep: 10
+
+  # Asks Openship to deploy once this commit's images are on GHCR. Openship's own
+  # deploy-on-push is off for this project: it fired before the images existed
+  # and pulled the previous :main. The trigger is an incoming webhook of the
+  # project in the Openship app (action "deploy", token auth). With the URL or
+  # token secret missing the job only leaves a notice; deploy from Openship then.
+  deploy:
+    name: deploy (Openship)
+    needs: [images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Deploys queue rather than cancel: a cancelled one can leave a service
+    # half replaced.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      OPENSHIP_DEPLOY_HOOK_URL: ${{ secrets.OPENSHIP_DEPLOY_HOOK_URL }}
+      OPENSHIP_DEPLOY_HOOK_TOKEN: ${{ secrets.OPENSHIP_DEPLOY_HOOK_TOKEN }}
+    steps:
+      - name: Ask Openship to deploy
+        run: |
+          if [ -z "$OPENSHIP_DEPLOY_HOOK_URL" ] || [ -z "$OPENSHIP_DEPLOY_HOOK_TOKEN" ]; then
+            echo "::notice::OPENSHIP_DEPLOY_HOOK_URL or OPENSHIP_DEPLOY_HOOK_TOKEN is not set, so CI does not deploy. Deploy from the Openship app."
+            exit 0
+          fi
+          # The response names the deployment it started; the token is never printed.
+          # Openship runs on the owner's MacBook: when it is off the call fails and
+          # this job goes red, which is the signal to deploy by hand later.
+          curl --silent --show-error --fail-with-body --max-time 60 --retry 3 --retry-all-errors \
+            -X POST \
+            -H "Authorization: Bearer $OPENSHIP_DEPLOY_HOOK_TOKEN" \
+            "$OPENSHIP_DEPLOY_HOOK_URL"
+          echo
