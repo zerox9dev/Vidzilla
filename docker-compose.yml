@@ -1,9 +1,9 @@
+# Production pulls the bot image that GitHub Actions builds for main
+# (.github/workflows/ci.yml). To build from this checkout instead, layer
+# docker-compose.build.yml on top (see README).
 services:
   vidzilla-bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: vidzilla-bot:latest
+    image: ghcr.io/zerox9dev/vidzilla-bot:main
     container_name: vidzilla-bot
     working_dir: /app
     depends_on:

@@ -1,0 +1,13 @@
+# Build the bot from this checkout instead of pulling it from GHCR:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# The image keeps the local name vidzilla-bot:latest, so a local build is never
+# tagged as the registry image it stands in for.
+
+services:
+  vidzilla-bot:
+    image: vidzilla-bot:latest
+    build:
+      context: .
+      dockerfile: Dockerfile

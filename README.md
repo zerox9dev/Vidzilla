@@ -43,11 +43,11 @@ Requires Docker + Docker Compose.
 git clone https://github.com/zerox9dev/Vidzilla.git
 cd Vidzilla
 cp .env.example .env   # if present, otherwise see "Environment" below
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 docker compose logs -f vidzilla-bot
 ```
 
-Two containers come up: `vidzilla-bot` and `cobalt-api`.
+Two containers come up: `vidzilla-bot` and `cobalt-api`. The `build.yml` override builds the bot from this checkout. Without it, compose pulls the image GitHub Actions publishes (`ghcr.io/zerox9dev/vidzilla-bot:main`).
 
 ## Environment
 
@@ -128,7 +128,8 @@ Both polling and webhook modes expose `GET /health` returning `{"status":"ok"}`.
 Vidzilla/
 ├── bot.py                       # entry point, polling/webhook bootstrap, /health
 ├── config.py                    # env vars, platform map, URL extraction
-├── docker-compose.yml           # bot + cobalt-api
+├── docker-compose.yml           # bot (GHCR image) + cobalt-api
+├── docker-compose.build.yml     # override: build the bot locally
 ├── Dockerfile                   # python:3.11-slim + ffmpeg
 ├── handlers/
 │   ├── handlers.py              # /start, link handler, fallback hint
@@ -156,7 +157,8 @@ Vidzilla/
 ```bash
 cd /root/Vidzilla
 git pull
-docker compose up -d --build
+docker compose pull vidzilla-bot
+docker compose up -d
 ```
 
 ## License
